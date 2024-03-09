@@ -30,5 +30,8 @@ jobs:
     - name: Test
       run: make test
 
+    - name: Setup Liter
+      run: make dev-deps-golangci-lint
+
     - name: Linter
       run: make lint
