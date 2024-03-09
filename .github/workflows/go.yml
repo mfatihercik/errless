@@ -21,6 +21,9 @@ jobs:
       with:
         go-version: '1.22'
 
+    - name: Go location
+      run: which go
+
     - name: Build
       run: make build
 
