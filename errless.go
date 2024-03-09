@@ -40,7 +40,7 @@ func Check5[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) (A, B, C, D, 
 	return a, b, c, d, e
 }
 
-// handleError is a deferred function that takes a custom error handling function as a parameter.
+// Handle is used to handle errors with a custom error handling function.
 func Handle(namedErr *error, onError func(error) error) {
 	if r := recover(); r != nil {
 		if err, ok := r.(error); ok {

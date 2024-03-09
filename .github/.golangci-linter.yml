@@ -1,0 +1,135 @@
+---
+run:
+  timeout: 5m
+  skip-dirs:
+    - vendor
+
+
+# Descriptions: https://golangci-lint.run/usage/linters/
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - dogsled
+    - errcheck
+    - exportloopref
+    - exhaustive
+    - forbidigo
+    - gocritic
+    - gci
+    - gocyclo
+    - gofmt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - noctx
+    - nestif
+    - nolintlint
+    - prealloc
+    - revive
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+
+linters-settings:
+  stylecheck:
+    checks:
+      - ALL
+      - -ST1003 #https://staticcheck.dev/docs/checks/#ST1003 allow Id
+  revive:
+    rules:
+      - name: var-naming
+        severity: warning
+        disabled: false
+        arguments:
+          - [ "ID" ] # AllowList
+          - [ "VM" ] # DenyList
+          - - upperCaseConst: true
+  dupl:
+    threshold: 100
+  forbidigo:
+    forbid:
+      - '(Debugf|Infof|Warnf|Warningf)$' # allows log.Fatalf and log.Errorf
+  funlen:
+    lines: 100
+    statements: 50
+  gci:
+    local-prefixes: github.com/mfatihercik/errless
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - docStub
+      - hugeParam
+      - paramTypeCombine
+      - rangeValCopy
+      - unnamedResult
+      - ptrToRefParam
+  gocyclo:
+    min-complexity: 15
+  goimports:
+    local-prefixes: github.com/mfatihercik/errless
+  gomnd:
+    settings:
+      mnd:
+        checks:
+          - assign
+          - case
+          - condition
+          - operation
+          - return
+  govet:
+    check-shadowing: true
+  lll:
+    line-length: 140
+  maligned:
+    suggest-new: true
+  nolintlint:
+    allow-leading-space: true
+    allow-unused: false
+    require-explanation: true
+    require-specific: true
+
+issues:
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
+
+  # Independently from option `exclude` we use default exclude patterns,
+  # it can be disabled by this option. To list all
+  # excluded by default patterns execute `golangci-lint run --help`.
+  # Default value for this option is true.
+  exclude-use-default: false
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    - linters:
+        - revive
+      text: "^(unexported-return:)|(package-comments)"
+    - path: _test\.go
+      linters:
+        - dupl
+        - gomnd
+        - lll
+    - linters:
+        - stylecheck
+      text: "ST1000: at least one file in a package should have a package comment"
