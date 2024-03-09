@@ -11,7 +11,7 @@ BINARY_NAME=errless
 GOLANGCI_LINT_CMD=$(GOPATH)/bin/golangci-lint
 GOLANGCI_LINT_EXISTS := $(shell which ${GOLANGCI_LINT_CMD})
 GOLANGCI_LINT_VERSION="v1.51.2" # current latest version
-GOLANGCI_LINT_CONFIG=".github/.golangci-linter.yml"
+GOLANGCI_LINT_CONFIG=".github/linters/.golangci.yml"
 
 
 all: test build
