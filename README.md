@@ -4,6 +4,12 @@ ErrLess is a Go library that brings the simplicity and elegance of the proposed 
 developers **today**.
 Inspired by the draft design for error handling in Go 2.0
 
+## Error Handling — Problem Overview
+
+Dealing with errors in GoLang can be a bit cumbersome. The common pattern is to check for errors after each function call that returns an error. This can lead to a lot of repetitive code and can make the code harder to read and maintain.
+
+Details can be found in the [**GoLang 2.0 Error Handling Overview**](https://github.com/golang/proposal/blob/master/design/go2draft-error-handling-overview.md) document as starting point of error handling proposal of golang 2.0
+
 ## Error Handling Proposal for GoLang 2.0
 This below text is taken from the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md)
 
