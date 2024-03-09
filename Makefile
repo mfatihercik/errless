@@ -5,7 +5,7 @@ GOCMD=$(GOROOT)/bin/go
 GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
 GOCLEAN=$(GOCMD) clean
-BINARY_NAME=mybinary
+BINARY_NAME=errless
 
 # Linters
 GOLANGCI_LINT_CMD=$(GOPATH)/bin/golangci-lint
