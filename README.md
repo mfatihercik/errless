@@ -13,7 +13,7 @@ Details can be found in the [**GoLang 2.0 Error Handling Overview**](https://git
 ## Error Handling Proposal for GoLang 2.0
 This below text is taken from the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md)
 
-#### Design
+### Design
 
 The draft design introduces the keywords `check` and `handle`, which we will introduce first by example.
 
@@ -50,7 +50,7 @@ For each check, there is an implicit **handler** chain function, explained in mo
 in [the link](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md#design). Here, the handler
 chain is the same for each check and is defined by the single handle statement to be:
 
-```go    
+```go
 func handleChain(err error) error {
     return err
 }
@@ -73,10 +73,10 @@ func printSum(a, b string) (err error) {
 
 ```
 
-**Check1** is a generic function. It can be used with any function that returns a single value and an error. 
+**Check1** is a generic function. It can be used with any function that returns a single value and an error.
 The signature of **Check1** is:
 
-```
+```go
 func Check1[A any](a A, err error) A
 ```
 
@@ -99,7 +99,7 @@ multiple values along with an error.
 
 ## **Getting Started**
 
-Using it is quite straightforward. 
+Using it is quite straightforward.
 
 Just `defer errless.Handle` method bigining of the function and wrap any error returning function with `Check` ,`Check1`, `Check2`, `Check3`, `Check4`, `Check5` and remove the error checking code.
 
@@ -115,10 +115,8 @@ import (
 
 func sum(a, b string) (res int, err error) {
     defer errless.Handle(&err, errless.EmptyHandler)
-	
     x := errless.Check1(strconv.Atoi(a))
     y := errless.Check1(strconv.Atoi(b))
-	
     return x + y, nil
 }
 
