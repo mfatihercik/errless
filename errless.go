@@ -18,7 +18,6 @@ func Check(err error, handles ...HandlerFunc) {
 		if err != nil {
 			panic(err)
 		}
-
 	}
 }
 

@@ -59,6 +59,9 @@ func handleChain(err error) error {
 
 ## ErrLess: Bringing Go 2.0 Error Handling to Go Today
 
+Below code sniped is the same function(`printSum`) implemented with ErrLess.
+The implementation is almost the same with the GoLang 2.0 Error Handling Proposal.
+
 ```go
 func printSum(a, b string) (err error) {
     defer errless.Handle(&err, func (err error) error {
@@ -73,35 +76,90 @@ func printSum(a, b string) (err error) {
 
 ```
 
-**Check1** is a generic function. It can be used with any function that returns a single value and an error.
+**Check1** is a generic function. It can be used with any function that returns a single value and error.
 The signature of **Check1** is:
 
 ```go
 func Check1[A any](a A, err error) A
 ```
 
-`strconv.Atoi` is returning a single value and an error that's why **Check1** is used here. If number of return value
+`strconv.Atoi` is returning a value and an error that's why **Check1** is used here. If number of return value
 changes, you can use **Check2**, **Check3**, **Check4**, **Check5**.
 
 
 Please closely look at the function's signature(`printSum(a, b string) (err error)`), where we use a named return value for the error(`err`).
 This allows the defer statement to access and modify the error value returned by the handle function. If you want to know more about **[Named Return Values](https://go.dev/doc/effective_go#named-results)** and [**Defer**](https://go.dev/doc/effective_go#defer), please check  [here](https://go.dev/doc/effective_go#named-results).
 
+ErrLess implementation fo all example in
+the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md)
+can be found in here.
+
 ## Features
 
-**Simplified Error Checking**: With functions like Check, **Check1**, **Check2**, **Check3**, **Check4**, and **Check5**, ErrLess allows developers to handle errors without cluttering their code with repetitive error checks.
+### **Simplified Error Checking**:
 
-**Generic Support**: Leveraging Go's generics, ErrLess provides a flexible way to work with functions that return
-multiple values along with an error.
+With functions like Check, **Check1**, **Check2**, **Check3**, **Check4**, and **Check5**,
+ErrLess allows developers to handle errors without cluttering their code with repetitive error checks.
 
-**Custom Error Handler**: You can define your own error handler function to enrich the returning error. If you don't want to handle the error, you can use **errless.EmptyHandler**.
+**Before:**
+
+```go
+x, err := strconv.Atoi(a)
+    if err != nil {
+    return err
+}
+```
+
+After:
+
+```go
+x := errless.Check1(strconv.Atoi(a))
+```
+
+### **Scoped Error Handler**: 
+If you want to add context to the error for specific error check,
+you can implement custom error handler. In this case, we need to use **Check1W**, **Check2W**, **Check3W**, **Check4W**,
+**Check5W** functions.
+This allow us to reuse the error handler for multiple error checks.  
+
+```go
+convertionError:= func (err error) error {
+return fmt.Errorf("failed to convert to int: %w", err)
+}
+x := errless.Check1W(strconv.Atoi(a)).With(convertionError)
+y := errless.Check1W(strconv.Atoi(a)).W(convertionError)
+z := errless.Check1W(strconv.Atoi(a)).W(convertionError)
+```
+
+**Function Scoped Error Handler**: If you want to add context to the error for **any** errors can happen in a function call,you can use **errless.Handle** method.
+want to handle the error, you can use **errless.EmptyHandler**.
+
+Imagine you want to add "sum of values failed" to the returning error of the function. You can use below code.
+
+```go
+func sum(a, b string) (res int, err error) {
+    defer errless.Handle(&err, func (err error) error {
+        return fmt.Errorf("sum of values failed: %w", err)
+    })
+    x := errless.Check1(strconv.Atoi(a))
+    y := errless.Check1(strconv.Atoi(b))
+    return x + y, nil
+}
+```
+it will add "sum of values failed" to the returning error of the function not mather error is coming from `strconv.Atoi(a)` or `strconv.Atoi(b)`.
+
+
+### **Static Type Check**: 
+Leveraging Go's generics, ErrLess provides a flexible way to work with functions that return
+multiple values along with an error. Thanks to generics, **all type checking is done at compile time**.
+
 
 
 ## **Getting Started**
 
 Using it is quite straightforward.
 
-Just `defer errless.Handle` method bigining of the function and wrap any error returning function with `Check` ,`Check1`, `Check2`, `Check3`, `Check4`, `Check5` and remove the error checking code.
+Just `defer errless.Handle` method beginning of the function and wrap any error returning function with `Check` ,`Check1`, `Check2`, `Check3`, `Check4`, `Check5` and remove the error checking code.
 
 ```go
 
