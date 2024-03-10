@@ -10,12 +10,6 @@ import (
 	"github.com/mfatihercik/errless"
 )
 
-// CustomErrorHandler handles errors by logging and optionally modifying them.
-func CustomErrorHandler(err error) error {
-	// You can also modify the error before returning it
-	return fmt.Errorf("custom error :%w ", err)
-}
-
 type Result struct {
 	Success bool
 }
@@ -25,8 +19,14 @@ func riskyOperation() (Result, error) {
 }
 
 func callRiskyOperation() (res Result, err error) {
-	defer errless.Handle(&err, CustomErrorHandler)
-	result := errless.Check1(riskyOperation())
+	defer errless.Handle(&err, func(err error) error {
+		// You can also modify the error before returning it
+		return fmt.Errorf("Main Handler :%w ", err)
+	})
+	customHandler := func(err error) error {
+		return fmt.Errorf("Custom Handler :%w ", err)
+	}
+	result := errless.Check1W(riskyOperation()).With(customHandler)
 	return result, nil
 }
 
