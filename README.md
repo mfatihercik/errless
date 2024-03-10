@@ -207,3 +207,289 @@ make test
 ## License
 
 MIT License
+
+
+## ErrLess implementation of Examples in GoLang 2.0 Error Handling Proposal
+
+You can find the implementation of the examples in the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md) below.
+You can see that only changes are the usage of `errless.Check1` and `errless.Handle` methods instead of the `check` and `handle` keywords.
+
+## `PrintSum` Example
+
+ **Implementation GoLang 2.0 Error Handling Proposal**
+link: [Printsum](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md#design)
+
+```go
+func printSum(a, b string) error {
+    handle err { return err }
+    x := check strconv.Atoi(a)
+    y := check strconv.Atoi(b)
+    fmt.Println("result:", x + y)
+    return nil
+}
+```
+
+**Implementation with ErrLess**
+
+```go
+import (
+e "github.com/mfatihercik/errless"
+)
+
+func printSum(a, b string) (err error) {
+    defer e.HandleReturn(func (e error){
+        err = e
+    }
+    x := e.Check1(strconv.Atoi(a))
+    y := e.Check1(strconv.Atoi(a))
+    fmt.Println("result:", x + y)
+    return nil
+}
+```
+
+
+
+### Inline `PrintSum` Example
+ **Implementation GoLang 2.0 Error Handling Proposal**
+Link: [Inline Printsum](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md#checks)
+
+```go
+func printSum(a, b string) error {
+	handle err { return err }
+	fmt.Println("result:", check strconv.Atoi(x) + check strconv.Atoi(y))
+	return nil
+}
+```
+
+**Implementation with ErrLess**
+
+
+```go
+import (
+e "github.com/mfatihercik/errless"
+)
+
+func printSum(a, b string) (err error) {
+    defer e.HandleReturn(func (e error){
+        err = e
+    }
+    fmt.Println("result:", e.Check1(strconv.Atoi(a)) + e.Check1(strconv.Atoi(b)))
+    return nil
+}
+```
+
+
+## `process` Example
+
+**Implementation GoLang 2.0 Error Handling Proposal**
+Link: [process](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md#handlers)
+
+```go
+func process(user string, files chan string) (n int, err error) {
+    handle err { return 0, fmt.Errorf("process: %v", err)  }      // handler A
+    for i := 0; i < 3; i++ {
+        handle err { err = fmt.Errorf("attempt %d: %v", i, err) } // handler B
+        handle err { err = moreWrapping(err) }                    // handler C
+
+        check do(something())  // check 1: handler chain C, B, A
+    }
+    check do(somethingElse())  // check 2: handler chain A
+}
+```
+
+**Implementation with ErrLess**
+
+```go
+import (
+e "github.com/mfatihercik/errless"
+)
+
+func process(user string, files chan string) (n int, err error) {
+	defer e.HandleReturn(func (e error){
+		n= 0
+		err = fmt.Errorf("process: %v", e)
+   })  // handler A
+    for i := 0; i < 3; i++ {
+        handleB:= func (err error) { err = fmt.Errorf("attempt %d: %v", i, err) } // handler B
+        handleC:=func (err error) { err = moreWrapping(err) }                    // handler C
+        
+        e.Check1W(do(something())).With(handleC,handleB)  // check 1: handler chain C, B, A
+    }
+    e.Check1(do(somethingElse()))  // check 2: handler chain A
+}
+
+```
+
+## `TestFoo` Example
+
+**Implementation GoLang 2.0 Error Handling Proposal**
+Link: [TestFoo](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md#stack-frame-preservation)
+
+```go
+func TestFoo(t *testing.T) {
+	handle err {
+        t.Helper()
+		t.Fatal(err) 
+	}
+	for _, tc := range testCases {
+		x := check Foo(tc.a)
+		y := check Foo(tc.b)
+		if x != y {
+			t.Errorf("Foo(%v) != Foo(%v)", tc.a, tc.b)
+		}
+	}
+}
+```
+**Implementation with ErrLess**
+
+```go
+func TestFoo(t *testing.T) {
+    defer e.HandleReturn(func (e error){
+		t.Helper()
+        t.Fatal(e)
+   })
+	for _, tc := range testCases {
+		x := e.Check1(Foo(tc.a))
+		y := e.Check1(Foo(tc.b))
+		if x != y {
+			t.Errorf("Foo(%v) != Foo(%v)", tc.a, tc.b)
+		}
+	}
+}
+```
+
+## `SortContents` Example
+
+**Implementation GoLang 2.0 Error Handling Proposal**
+Link: [SortContents](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md#examples)
+
+```go
+func SortContents(w io.Writer, files []string) error {
+    handle err {
+        return fmt.Errorf("process: %v", err)             // handler A
+    }
+
+    lines := []strings{}
+    for _, file := range files {
+        handle err {
+            return fmt.Errorf("read %s: %v ", file, err)  // handler B
+        }
+        scan := bufio.NewScanner(check os.Open(file))     // check runs B on error
+        for scan.Scan() {
+            lines = append(lines, scan.Text())
+        }
+        check scan.Err()                                  // check runs B on error
+    }
+    sort.Strings(lines)
+    for _, line := range lines {
+        check io.WriteString(w, line)                     // check runs A on error
+    }
+}
+```
+
+**Implementation with ErrLess**
+
+```go
+func SortContents(w io.Writer, files []string) (err error) {
+
+	defer e.HandleReturn(func(e error) {
+		err = fmt.Errorf("process: %v", e) // handler A
+	})
+
+	lines := []string{}
+	for _, file := range files {
+		handleB := func(err error) error {
+			return fmt.Errorf("read %s: %v ", file, err) // handler B
+		}
+		scan := bufio.NewScanner(e.Check1W(os.Open(file)).With(handleB)) // handler B
+
+		for scan.Scan() {
+			lines = append(lines, scan.Text())
+		}
+		e.CheckW(scan.Err()).With(handleB) // handler B
+	}
+	sort.Strings(lines)
+	for _, line := range lines {
+		e.Check1(io.WriteString(w, line)) // check runs A on error
+	}
+	return nil
+}
+```
+
+
+## `CopyFile` Example
+
+GoLang 1.0 Implementation
+```go
+func CopyFile(src, dst string) error {
+	r, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("copy %s %s: %v", src, dst, err)
+	}
+	defer r.Close()
+
+	w, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("copy %s %s: %v", src, dst, err)
+	}
+
+	if _, err := io.Copy(w, r); err != nil {
+		w.Close()
+		os.Remove(dst)
+		return fmt.Errorf("copy %s %s: %v", src, dst, err)
+	}
+
+	if err := w.Close(); err != nil {
+		os.Remove(dst)
+		return fmt.Errorf("copy %s %s: %v", src, dst, err)
+	}
+}
+```
+
+**Implementation GoLang 2.0 Error Handling Proposal**
+Link: [CopyFile]https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling-overview.md#problem)
+
+```go
+func CopyFile(src, dst string) error {
+	handle err {
+		return fmt.Errorf("copy %s %s: %v", src, dst, err)
+	}
+
+	r := check os.Open(src)
+	defer r.Close()
+
+	w := check os.Create(dst)
+	handle err {
+		w.Close()
+		os.Remove(dst) // (only if a check fails)
+	}
+
+	check io.Copy(w, r)
+	check w.Close()
+	return nil
+}
+```
+
+**Implementation with ErrLess**
+
+```go
+func CopyFile(src, dst string) error {
+    defer e.HandleReturn(func(e error) {
+        err = fmt.Errorf("copy %s %s: %v", src, dst, e)
+    })
+	
+	r := e.Check1(os.Open(src))
+	defer r.Close()
+
+	w := e.Check1(os.Create(dst))
+	
+	removeFile:= (err error) {
+		w.Close()
+		os.Remove(dst) // (only if a check fails)
+	}
+
+    e.Check1(io.Copy(w, r)).With(removeFile)
+    e.Check1(w.Close()).With(removeFile)
+	return nil
+}
+```

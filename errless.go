@@ -189,6 +189,11 @@ func (r *Params5[A, B, C, D, E]) With(handle ...HandlerFunc) (A, B, C, D, E) {
 	return r.paramA, r.paramB, r.paramC, r.paramD, r.paramE
 }
 
+// ReturnErr is set caught error to passed named error
+func ReturnErr(namedErr *error) {
+	Handle(namedErr, EmptyHandler)
+}
+
 // Handle is used to handle to catch panics and handle errors with a custom error handling function.
 func Handle(namedErr *error, onError func(error) error) {
 	if r := recover(); r != nil {
@@ -197,17 +202,6 @@ func Handle(namedErr *error, onError func(error) error) {
 			if namedErr != nil {
 				*namedErr = e
 			}
-		} else {
-			// This was not an error panic; re-panic with the original value.
-			panic(r)
-		}
-	}
-}
-
-func Catch(onError func(e error)) {
-	if r := recover(); r != nil {
-		if err, ok := r.(error); ok {
-			onError(err)
 		} else {
 			// This was not an error panic; re-panic with the original value.
 			panic(r)

@@ -11,7 +11,7 @@ import (
 )
 
 func sumWithCatch(a, b string) (res int, err error) {
-	defer errless.Catch(func(e error) {
+	defer errless.HandleReturn(func(e error) {
 		err = e
 	})
 	x := errless.Check1(strconv.Atoi(a))
