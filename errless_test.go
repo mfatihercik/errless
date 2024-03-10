@@ -11,47 +11,70 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type TestCase struct {
+	name              string
+	expectedErrorText string
+	errorHandle       func(err error) error
+	withCustomHandler func(err error) error
+	withMessage       string
+}
+
 func TestCheckFunctions(t *testing.T) {
 
-	testcases := []struct {
-		name              string
-		expectedErrorText string
-		errorHandle       func(err error) error
-		customHandler     func(err error) error
-	}{
+	testcases := []TestCase{
 		{name: "default handler should return error",
 			expectedErrorText: "test error", // error case
 			errorHandle: func(err error) error {
 				assert.ErrorContains(t, err, "test error")
 				return err
 			},
-			customHandler: nil,
+			withCustomHandler: nil,
 		},
+
 		{name: "default handler should return success",
 			expectedErrorText: "", // success case
 			errorHandle: func(err error) error {
 				t.Fatal("shouldn't be called")
 				return err
 			},
-			customHandler: nil,
+			withCustomHandler: nil,
 		},
-		{name: "custom handler should return customized error",
+		{name: "custom handler: should return customized error",
 			expectedErrorText: "custom error", // error in the custom handler
 			errorHandle: func(err error) error {
 				assert.ErrorContains(t, err, "custom error")
 				return err
 			},
-			customHandler: func(err error) error {
+			withCustomHandler: func(err error) error {
 				return fmt.Errorf("custom error :%w ", err)
 			},
 		},
-		{name: "custom handler should return success",
+		{name: "custom handler: should return success",
 			expectedErrorText: "", // success case
 			errorHandle: func(err error) error {
 				t.Fatal("shouldn't be called")
 				return err
 			},
-			customHandler: func(err error) error {
+			withCustomHandler: func(err error) error {
+				t.Fatal("shouldn't be called")
+				return err
+			},
+		},
+		{name: "with Message: should return customized error",
+			expectedErrorText: "custom message",
+			errorHandle: func(err error) error {
+				assert.ErrorContains(t, err, "custom message")
+				return err
+			},
+			withMessage: "custom message",
+		},
+		{name: "with Message: should return success",
+			expectedErrorText: "", // success case
+			errorHandle: func(err error) error {
+				t.Fatal("shouldn't be called")
+				return err
+			},
+			withCustomHandler: func(err error) error {
 				t.Fatal("shouldn't be called")
 				return err
 			},
@@ -72,12 +95,7 @@ func TestCheckFunctions(t *testing.T) {
 
 }
 
-func functionWithZeroReturn(t *testing.T, tt struct {
-	name              string
-	expectedErrorText string
-	errorHandle       func(err error) error
-	customHandler     func(err error) error
-}) {
+func functionWithZeroReturn(t *testing.T, tt TestCase) {
 	t.Run(tt.name+" functionWithZeroReturn", func(t *testing.T) {
 		t.Helper()
 		zeroParameterFunc := func() error {
@@ -89,8 +107,10 @@ func functionWithZeroReturn(t *testing.T, tt struct {
 		funcWithErrorReturn := func() (err error) {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
-			if tt.customHandler != nil {
-				e.CheckW(zeroParameterFunc()).With(tt.customHandler)
+			if tt.withCustomHandler != nil {
+				e.CheckW(zeroParameterFunc()).With(tt.withCustomHandler)
+			} else if tt.withMessage != "" {
+				e.CheckW(zeroParameterFunc()).WithMessage(tt.withMessage)
 			} else {
 				e.Check(zeroParameterFunc())
 			}
@@ -107,12 +127,7 @@ func functionWithZeroReturn(t *testing.T, tt struct {
 	})
 }
 
-func functionWithOneReturn(t *testing.T, tt struct {
-	name              string
-	expectedErrorText string
-	errorHandle       func(err error) error
-	customHandler     func(err error) error
-}) {
+func functionWithOneReturn(t *testing.T, tt TestCase) {
 	t.Run(tt.name+" functionWithOneReturn", func(t *testing.T) {
 		multiplyByTwo := func(a int) (int, error) {
 			if tt.expectedErrorText == "" {
@@ -124,8 +139,8 @@ func functionWithOneReturn(t *testing.T, tt struct {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 
-			if tt.customHandler != nil {
-				return e.Check1W(multiplyByTwo(a)).With(tt.customHandler), nil
+			if tt.withCustomHandler != nil {
+				return e.Check1W(multiplyByTwo(a)).With(tt.withCustomHandler), nil
 			} else {
 				return e.Check1(multiplyByTwo(a)), nil
 			}
@@ -144,12 +159,7 @@ func functionWithOneReturn(t *testing.T, tt struct {
 
 }
 
-func functionWithTwoReturn(t *testing.T, tt struct {
-	name              string
-	expectedErrorText string
-	errorHandle       func(err error) error
-	customHandler     func(err error) error
-}) {
+func functionWithTwoReturn(t *testing.T, tt TestCase) {
 	t.Run(tt.name+" functionWithTwoReturn", func(t *testing.T) {
 		multiplyByTwo := func(a, b int) (int, int, error) {
 			if tt.expectedErrorText == "" {
@@ -161,8 +171,8 @@ func functionWithTwoReturn(t *testing.T, tt struct {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 
-			if tt.customHandler != nil {
-				res1, res2 = e.Check2W(multiplyByTwo(a, b)).With(tt.customHandler)
+			if tt.withCustomHandler != nil {
+				res1, res2 = e.Check2W(multiplyByTwo(a, b)).With(tt.withCustomHandler)
 				return res1, res2, nil
 			} else {
 				res1, res2 = e.Check2(multiplyByTwo(a, b))
@@ -185,12 +195,7 @@ func functionWithTwoReturn(t *testing.T, tt struct {
 
 }
 
-func functionWithThreeReturn(t *testing.T, tt struct {
-	name              string
-	expectedErrorText string
-	errorHandle       func(err error) error
-	customHandler     func(err error) error
-}) {
+func functionWithThreeReturn(t *testing.T, tt TestCase) {
 	t.Run(tt.name+" functionWithThreeReturn", func(t *testing.T) {
 		multiplyByTwo := func(a, b, c int) (int, int, int, error) {
 			if tt.expectedErrorText == "" {
@@ -202,8 +207,8 @@ func functionWithThreeReturn(t *testing.T, tt struct {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 
-			if tt.customHandler != nil {
-				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).With(tt.customHandler)
+			if tt.withCustomHandler != nil {
+				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).With(tt.withCustomHandler)
 				return res1, res2, res3, nil
 			} else {
 				res1, res2, res3 = e.Check3(multiplyByTwo(a, b, c))
@@ -226,12 +231,7 @@ func functionWithThreeReturn(t *testing.T, tt struct {
 		}
 	})
 }
-func functionWithFourReturn(t *testing.T, tt struct {
-	name              string
-	expectedErrorText string
-	errorHandle       func(err error) error
-	customHandler     func(err error) error
-}) {
+func functionWithFourReturn(t *testing.T, tt TestCase) {
 	t.Run(tt.name+" functionWithFourReturn", func(t *testing.T) {
 		multiplyByTwo := func(a, b, c, d int) (int, int, int, int, error) {
 			if tt.expectedErrorText == "" {
@@ -243,8 +243,8 @@ func functionWithFourReturn(t *testing.T, tt struct {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 
-			if tt.customHandler != nil {
-				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).With(tt.customHandler)
+			if tt.withCustomHandler != nil {
+				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).With(tt.withCustomHandler)
 				return res1, res2, res3, res4, nil
 			} else {
 				res1, res2, res3, res4 = e.Check4(multiplyByTwo(a, b, c, d))
@@ -271,12 +271,7 @@ func functionWithFourReturn(t *testing.T, tt struct {
 
 }
 
-func functionWithFiveReturn(t *testing.T, tt struct {
-	name              string
-	expectedErrorText string
-	errorHandle       func(err error) error
-	customHandler     func(err error) error
-}) {
+func functionWithFiveReturn(t *testing.T, tt TestCase) {
 	t.Run(tt.name+" functionWithFiveReturn", func(t *testing.T) {
 		multiplyByTwo := func(a, b, c, d, e int) (int, int, int, int, int, error) {
 			if tt.expectedErrorText == "" {
@@ -288,8 +283,8 @@ func functionWithFiveReturn(t *testing.T, tt struct {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 
-			if tt.customHandler != nil {
-				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).With(tt.customHandler)
+			if tt.withCustomHandler != nil {
+				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).With(tt.withCustomHandler)
 				return res1, res2, res3, res4, res5, nil
 			} else {
 				res1, res2, res3, res4, res5 = e.Check5(multiplyByTwo(a, b, c, d, ee))

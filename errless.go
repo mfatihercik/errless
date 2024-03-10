@@ -1,5 +1,7 @@
 package errless
 
+import "fmt"
+
 // HandlerFunc defines the signature for an error handler.
 type HandlerFunc func(error) error
 
@@ -32,6 +34,13 @@ func CheckW(err error) *Params0 {
 
 func (r *Params0) With(handle ...HandlerFunc) {
 	Check(r.err, handle...)
+}
+
+func (r *Params0) WithMessage(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+}
+func (r *Params0) WithWrap(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
 }
 
 // one parameter functions
@@ -71,6 +80,13 @@ func (r *Params1[A]) W(handle ...HandlerFunc) A {
 	return r.With(handle...)
 }
 
+func (r *Params1[A]) WithMessage(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+}
+func (r *Params1[A]) WithWrap(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+}
+
 // 2 parameter functions
 // --------------------------
 
@@ -97,6 +113,13 @@ func Check2W[A, B any](a A, b B, err error) *Params2[A, B] {
 func (r *Params2[A, B]) With(handle ...HandlerFunc) (A, B) {
 	Check(r.err, handle...)
 	return r.paramA, r.paramB
+}
+
+func (r *Params2[A, B]) WithMessage(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+}
+func (r *Params2[A, B]) WithWrap(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
 }
 
 // three parameter functions
@@ -128,7 +151,12 @@ func (r *Params3[A, B, C]) With(handle ...HandlerFunc) (A, B, C) {
 	return r.paramA, r.paramB, r.paramC
 }
 
-// four parameter functions
+func (r *Params3[A, B, C]) WithMessage(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+}
+func (r *Params3[A, B, C]) WithWrap(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+} // four parameter functions
 // --------------------------
 
 // Check4 checks the error with default error handler.
@@ -158,7 +186,12 @@ func (r *Params4[A, B, C, D]) With(handle ...HandlerFunc) (A, B, C, D) {
 	return r.paramA, r.paramB, r.paramC, r.paramD
 }
 
-// five parameter functions
+func (r *Params4[A, B, C, D]) WithMessage(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+}
+func (r *Params4[A, B, C, D]) WithWrap(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+} // five parameter functions
 // --------------------------
 
 // Check5 checks the error with default error handler.
@@ -189,7 +222,12 @@ func (r *Params5[A, B, C, D, E]) With(handle ...HandlerFunc) (A, B, C, D, E) {
 	return r.paramA, r.paramB, r.paramC, r.paramD, r.paramE
 }
 
-// ReturnErr is set caught error to passed named error
+func (r *Params5[A, B, C, D, E]) WithMessage(message string) {
+	Check(fmt.Errorf(message+"error: %s", r.err))
+}
+func (r *Params5[A, B, C, D, E]) WithWrap(message string) {
+	Check(fmt.Errorf(message+"error: %w", r.err))
+} // ReturnErr is set caught error to passed named error
 func ReturnErr(namedErr *error) {
 	Handle(namedErr, EmptyHandler)
 }
