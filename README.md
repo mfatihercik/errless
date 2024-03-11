@@ -131,7 +131,34 @@ y := errless.Check1W(strconv.Atoi(a)).W(convertionError)
 z := errless.Check1W(strconv.Atoi(a)).W(convertionError)
 ```
 
-**Function Scoped Error Handler**: If you want to add context to the error for **any** errors can happen in a function call,you can use **errless.Handle** method.
+### **Quickly Add Context to the Error**:
+You can add additional context to the error with **WithMessage** or **WithWrap**  method. This will add passed message to the error message.
+
+```go
+
+x := errless.Check1W(strconv.Atoi(a)).WithMessage("failed to convert to int")
+
+```
+You can even implement your own message addtion and use it with **With** method.
+
+Create A generic Handler:
+```go
+func message(message string,params...interfaces{}) HandlerFunc {
+    return func(err error) error {
+            return newError(message+"- error: %s",params...,err)
+    }
+}
+```
+Use the customised handler:
+```go
+x := errless.Check1W(strconv.Atoi(a)).With(message("failed to convert to int"))
+
+````
+
+
+
+###  **Function Scoped Error Handler**: 
+If you want to add context to the error for **any** errors can happen in a function call,you can use **errless.Handle** method.
 want to handle the error, you can use **errless.EmptyHandler**.
 
 Imagine you want to add "sum of values failed" to the returning error of the function. You can use below code.
