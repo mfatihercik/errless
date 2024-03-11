@@ -90,9 +90,9 @@ changes, you can use **Check2**, **Check3**, **Check4**, **Check5**.
 Please closely look at the function's signature(`printSum(a, b string) (err error)`), where we use a named return value for the error(`err`).
 This allows the defer statement to access and modify the error value returned by the handle function. If you want to know more about **[Named Return Values](https://go.dev/doc/effective_go#named-results)** and [**Defer**](https://go.dev/doc/effective_go#defer), please check  [here](https://go.dev/doc/effective_go#named-results).
 
-ErrLess implementation fo all example in
+ErrLess implementation of all example in
 the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md)
-can be found in at the **end of the file**.
+can be found in at the **[end of the file](/README.md#errless-implementation-of-examples-in-golang-20-error-handling-proposal)**.
 
 ## Features
 
