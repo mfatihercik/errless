@@ -92,7 +92,7 @@ This allows the defer statement to access and modify the error value returned by
 
 ErrLess implementation fo all example in
 the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md)
-can be found in here.
+can be found in at the **end of the file**.
 
 ## Features
 
@@ -240,6 +240,8 @@ MIT License
 
 You can find the implementation of the examples in the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md) below.
 You can see that only changes are the usage of `errless.Check1` and `errless.Handle` methods instead of the `check` and `handle` keywords.
+
+**Real Code Conversion** examples are in [here](https://gist.github.com/mfatihercik/5cf423bb720d7f7313d976b06360fdbb)
 
 ## `PrintSum` Example
 
