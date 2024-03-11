@@ -61,9 +61,7 @@ func (r *Params0) WithWrap(message string) {
 
 // Check1 checks the error with default error handler.
 func Check1[A any](a A, err error) A {
-	if err != nil {
-		Check(err)
-	}
+	Check(err)
 	return a
 }
 
@@ -105,9 +103,7 @@ func (r *Params1[A]) WithWrap(message string) A {
 
 // Check2 checks the error with default error handler.
 func Check2[A, B any](a A, b B, err error) (A, B) {
-	if err != nil {
-		Check(err)
-	}
+	Check(err)
 	return a, b
 }
 
@@ -140,9 +136,7 @@ func (r *Params2[A, B]) WithWrap(message string) (A, B) {
 
 // Check3 checks the error with default error handler.
 func Check3[A, B, C any](a A, b B, c C, err error) (A, B, C) {
-	if err != nil {
-		Check(err)
-	}
+	Check(err)
 	return a, b, c
 }
 
@@ -176,9 +170,7 @@ func (r *Params3[A, B, C]) WithWrap(message string) (A, B, C) {
 
 // Check4 checks the error with default error handler.
 func Check4[A, B, C, D any](a A, b B, c C, d D, err error) (A, B, C, D) {
-	if err != nil {
-		Check(err)
-	}
+	Check(err)
 	return a, b, c, d
 }
 
@@ -213,9 +205,7 @@ func (r *Params4[A, B, C, D]) WithWrap(message string) (A, B, C, D) {
 
 // Check5 checks the error with default error handler.
 func Check5[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) (A, B, C, D, E) {
-	if err != nil {
-		Check(err)
-	}
+	Check(err)
 	return a, b, c, d, e
 }
 
