@@ -5,6 +5,18 @@ import "fmt"
 // HandlerFunc defines the signature for an error handler.
 type HandlerFunc func(error) error
 
+func messageHandler(message string) HandlerFunc {
+	return func(err error) error {
+		return fmt.Errorf(message+" - error: %s", err)
+	}
+}
+
+func wrapHandler(message string) HandlerFunc {
+	return func(err error) error {
+		return fmt.Errorf(message+" - error: %s", err)
+	}
+}
+
 // zero parameter functions
 // --------------------------
 
@@ -37,10 +49,11 @@ func (r *Params0) With(handle ...HandlerFunc) {
 }
 
 func (r *Params0) WithMessage(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+	r.With(messageHandler(message))
+
 }
 func (r *Params0) WithWrap(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+	r.With(wrapHandler(message))
 }
 
 // one parameter functions
@@ -80,11 +93,11 @@ func (r *Params1[A]) W(handle ...HandlerFunc) A {
 	return r.With(handle...)
 }
 
-func (r *Params1[A]) WithMessage(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+func (r *Params1[A]) WithMessage(message string) A {
+	return r.With(messageHandler(message))
 }
-func (r *Params1[A]) WithWrap(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+func (r *Params1[A]) WithWrap(message string) A {
+	return r.With(wrapHandler(message))
 }
 
 // 2 parameter functions
@@ -115,11 +128,11 @@ func (r *Params2[A, B]) With(handle ...HandlerFunc) (A, B) {
 	return r.paramA, r.paramB
 }
 
-func (r *Params2[A, B]) WithMessage(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+func (r *Params2[A, B]) WithMessage(message string) (A, B) {
+	return r.With(messageHandler(message))
 }
-func (r *Params2[A, B]) WithWrap(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+func (r *Params2[A, B]) WithWrap(message string) (A, B) {
+	return r.With(wrapHandler(message))
 }
 
 // three parameter functions
@@ -151,12 +164,14 @@ func (r *Params3[A, B, C]) With(handle ...HandlerFunc) (A, B, C) {
 	return r.paramA, r.paramB, r.paramC
 }
 
-func (r *Params3[A, B, C]) WithMessage(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+func (r *Params3[A, B, C]) WithMessage(message string) (A, B, C) {
+	return r.With(messageHandler(message))
 }
-func (r *Params3[A, B, C]) WithWrap(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
-} // four parameter functions
+func (r *Params3[A, B, C]) WithWrap(message string) (A, B, C) {
+	return r.With(wrapHandler(message))
+}
+
+// four parameter functions
 // --------------------------
 
 // Check4 checks the error with default error handler.
@@ -186,12 +201,14 @@ func (r *Params4[A, B, C, D]) With(handle ...HandlerFunc) (A, B, C, D) {
 	return r.paramA, r.paramB, r.paramC, r.paramD
 }
 
-func (r *Params4[A, B, C, D]) WithMessage(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
+func (r *Params4[A, B, C, D]) WithMessage(message string) (A, B, C, D) {
+	return r.With(messageHandler(message))
 }
-func (r *Params4[A, B, C, D]) WithWrap(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
-} // five parameter functions
+func (r *Params4[A, B, C, D]) WithWrap(message string) (A, B, C, D) {
+	return r.With(wrapHandler(message))
+}
+
+// five parameter functions
 // --------------------------
 
 // Check5 checks the error with default error handler.
@@ -222,12 +239,14 @@ func (r *Params5[A, B, C, D, E]) With(handle ...HandlerFunc) (A, B, C, D, E) {
 	return r.paramA, r.paramB, r.paramC, r.paramD, r.paramE
 }
 
-func (r *Params5[A, B, C, D, E]) WithMessage(message string) {
-	Check(fmt.Errorf(message+"error: %s", r.err))
+func (r *Params5[A, B, C, D, E]) WithMessage(message string) (A, B, C, D, E) {
+	return r.With(messageHandler(message))
 }
-func (r *Params5[A, B, C, D, E]) WithWrap(message string) {
-	Check(fmt.Errorf(message+"error: %w", r.err))
-} // ReturnErr is set caught error to passed named error
+func (r *Params5[A, B, C, D, E]) WithWrap(message string) (A, B, C, D, E) {
+	return r.With(wrapHandler(message))
+}
+
+// ReturnErr is set caught error to passed named error
 func ReturnErr(namedErr *error) {
 	Handle(namedErr, EmptyHandler)
 }

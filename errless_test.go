@@ -74,10 +74,7 @@ func TestCheckFunctions(t *testing.T) {
 				t.Fatal("shouldn't be called")
 				return err
 			},
-			withCustomHandler: func(err error) error {
-				t.Fatal("shouldn't be called")
-				return err
-			},
+			withMessage: "custom message",
 		},
 	}
 	for _, tt := range testcases {
@@ -174,6 +171,9 @@ func functionWithTwoReturn(t *testing.T, tt TestCase) {
 			if tt.withCustomHandler != nil {
 				res1, res2 = e.Check2W(multiplyByTwo(a, b)).With(tt.withCustomHandler)
 				return res1, res2, nil
+			} else if tt.withMessage != "" {
+				res1, res2 = e.Check2W(multiplyByTwo(a, b)).WithMessage(tt.withMessage)
+				return res1, res2, nil
 			} else {
 				res1, res2 = e.Check2(multiplyByTwo(a, b))
 				return res1, res2, nil
@@ -210,6 +210,9 @@ func functionWithThreeReturn(t *testing.T, tt TestCase) {
 			if tt.withCustomHandler != nil {
 				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).With(tt.withCustomHandler)
 				return res1, res2, res3, nil
+			} else if tt.withMessage != "" {
+				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).WithMessage(tt.withMessage)
+				return res1, res2, res3, nil
 			} else {
 				res1, res2, res3 = e.Check3(multiplyByTwo(a, b, c))
 				return res1, res2, res3, nil
@@ -245,6 +248,9 @@ func functionWithFourReturn(t *testing.T, tt TestCase) {
 
 			if tt.withCustomHandler != nil {
 				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).With(tt.withCustomHandler)
+				return res1, res2, res3, res4, nil
+			} else if tt.withCustomHandler != nil {
+				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).WithMessage(tt.withMessage)
 				return res1, res2, res3, res4, nil
 			} else {
 				res1, res2, res3, res4 = e.Check4(multiplyByTwo(a, b, c, d))
@@ -285,6 +291,9 @@ func functionWithFiveReturn(t *testing.T, tt TestCase) {
 
 			if tt.withCustomHandler != nil {
 				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).With(tt.withCustomHandler)
+				return res1, res2, res3, res4, res5, nil
+			} else if tt.withCustomHandler != nil {
+				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).WithMessage(tt.withMessage)
 				return res1, res2, res3, res4, res5, nil
 			} else {
 				res1, res2, res3, res4, res5 = e.Check5(multiplyByTwo(a, b, c, d, ee))
