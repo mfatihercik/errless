@@ -145,7 +145,7 @@ Create A generic Handler:
 ```go
 func message(message string,params...interfaces{}) HandlerFunc {
     return func(err error) error {
-            return newError(message+"- error: %s",params...,err)
+            return fmt.Errorf(message+"- error: %s",params...,err)
     }
 }
 ```
