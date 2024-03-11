@@ -158,15 +158,15 @@ x := errless.Check1W(strconv.Atoi(a)).With(message("failed to convert to int"))
 
 
 ###  **Function Scoped Error Handler**: 
-If you want to add context to the error for **any** errors can happen in a function call,you can use **errless.Handle** method.
-want to handle the error, you can use **errless.EmptyHandler**.
+If you want to add context to the error for **any** errors can happen in a function call,you can use **Handle** or **HandleReturn** method.
 
 Imagine you want to add "sum of values failed" to the returning error of the function. You can use below code.
 
 ```go
 func sum(a, b string) (res int, err error) {
-    defer errless.Handle(&err, func (err error) error {
-        return fmt.Errorf("sum of values failed: %w", err)
+    defer errless.HandleReturn(func (e error) {
+		// assign to named error return value
+        err= fmt.Errorf("sum of values failed: %w", e)
     })
     x := errless.Check1(strconv.Atoi(a))
     y := errless.Check1(strconv.Atoi(b))
