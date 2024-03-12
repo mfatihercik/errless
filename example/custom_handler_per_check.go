@@ -26,12 +26,12 @@ func SortContents(w io.Writer, files []string) (err error) {
 		handleB := func(err error) error {
 			return fmt.Errorf("read %s: %v ", file, err) // handler B
 		}
-		scan := bufio.NewScanner(e.Check1W(os.Open(file)).With(handleB)) // handler B
+		scan := bufio.NewScanner(e.Check1W(os.Open(file)).Err(handleB)) // handler B
 
 		for scan.Scan() {
 			lines = append(lines, scan.Text())
 		}
-		e.CheckW(scan.Err()).With(handleB) // handler B
+		e.CheckW(scan.Err()).Err(handleB) // handler B
 	}
 	sort.Strings(lines)
 	for _, line := range lines {

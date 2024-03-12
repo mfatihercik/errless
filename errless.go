@@ -44,16 +44,18 @@ func CheckW(err error) *Params0 {
 	return &Params0{err: err}
 }
 
-func (r *Params0) With(handle ...HandlerFunc) {
+func (r *Params0) Err(handle ...HandlerFunc) {
 	Check(r.err, handle...)
 }
-
-func (r *Params0) WithMessage(message string) {
-	r.With(messageHandler(message))
-
+func (r *Params0) Ok(handle func(error)) {
+	handle(r.err)
 }
-func (r *Params0) WithWrap(message string) {
-	r.With(wrapHandler(message))
+
+func (r *Params0) ErrMessage(message string) {
+	r.Err(messageHandler(message))
+}
+func (r *Params0) ErrWrap(message string) {
+	r.Err(wrapHandler(message))
 }
 
 // one parameter functions
@@ -80,22 +82,26 @@ func Check1W[A any](a A, err error) *Params1[A] {
 	return &Params1[A]{paramA: a, err: err}
 }
 
-// With applies an error handler to the Result.
-func (r *Params1[A]) With(handle ...HandlerFunc) A {
+// Err applies an error handler to the Result.
+func (r *Params1[A]) Err(handle ...HandlerFunc) A {
 	Check(r.err, handle...)
 	return r.paramA
 }
 
-// W is an alias for With.
-func (r *Params1[A]) W(handle ...HandlerFunc) A {
-	return r.With(handle...)
+func (r *Params1[A]) Ok(handle func(error) A) A {
+	return handle(r.err)
 }
 
-func (r *Params1[A]) WithMessage(message string) A {
-	return r.With(messageHandler(message))
+// W is an alias for Err.
+func (r *Params1[A]) W(handle ...HandlerFunc) A {
+	return r.Err(handle...)
 }
-func (r *Params1[A]) WithWrap(message string) A {
-	return r.With(wrapHandler(message))
+
+func (r *Params1[A]) ErrMessage(message string) A {
+	return r.Err(messageHandler(message))
+}
+func (r *Params1[A]) ErrWrap(message string) A {
+	return r.Err(wrapHandler(message))
 }
 
 // 2 parameter functions
@@ -118,17 +124,21 @@ func Check2W[A, B any](a A, b B, err error) *Params2[A, B] {
 	return &Params2[A, B]{paramA: a, paramB: b, err: err}
 }
 
-// HandleD With applies an error handler to the Result.
-func (r *Params2[A, B]) With(handle ...HandlerFunc) (A, B) {
+// Err  applies an error handler to the Result.
+func (r *Params2[A, B]) Err(handle ...HandlerFunc) (A, B) {
 	Check(r.err, handle...)
 	return r.paramA, r.paramB
 }
 
-func (r *Params2[A, B]) WithMessage(message string) (A, B) {
-	return r.With(messageHandler(message))
+func (r *Params2[A, B]) Ok(handle func(error) (A, B)) (A, B) {
+	return handle(r.err)
 }
-func (r *Params2[A, B]) WithWrap(message string) (A, B) {
-	return r.With(wrapHandler(message))
+
+func (r *Params2[A, B]) ErrMessage(message string) (A, B) {
+	return r.Err(messageHandler(message))
+}
+func (r *Params2[A, B]) ErrWrap(message string) (A, B) {
+	return r.Err(wrapHandler(message))
 }
 
 // three parameter functions
@@ -152,17 +162,21 @@ func Check3W[A, B, C any](a A, b B, c C, err error) *Params3[A, B, C] {
 	return &Params3[A, B, C]{paramA: a, paramB: b, paramC: c, err: err}
 }
 
-// With applies an error handler to the Result.
-func (r *Params3[A, B, C]) With(handle ...HandlerFunc) (A, B, C) {
+// Err applies an error handler to the Result.
+func (r *Params3[A, B, C]) Err(handle ...HandlerFunc) (A, B, C) {
 	Check(r.err, handle...)
 	return r.paramA, r.paramB, r.paramC
 }
 
-func (r *Params3[A, B, C]) WithMessage(message string) (A, B, C) {
-	return r.With(messageHandler(message))
+func (r *Params3[A, B, C]) Ok(handle func(error) (A, B, C)) (A, B, C) {
+	return handle(r.err)
 }
-func (r *Params3[A, B, C]) WithWrap(message string) (A, B, C) {
-	return r.With(wrapHandler(message))
+
+func (r *Params3[A, B, C]) ErrMessage(message string) (A, B, C) {
+	return r.Err(messageHandler(message))
+}
+func (r *Params3[A, B, C]) ErrWrap(message string) (A, B, C) {
+	return r.Err(wrapHandler(message))
 }
 
 // four parameter functions
@@ -187,17 +201,21 @@ func Check4W[A, B, C, D any](a A, b B, c C, d D, err error) *Params4[A, B, C, D]
 	return &Params4[A, B, C, D]{paramA: a, paramB: b, paramC: c, paramD: d, err: err}
 }
 
-// With applies an error handler to the Result.
-func (r *Params4[A, B, C, D]) With(handle ...HandlerFunc) (A, B, C, D) {
+// Err applies an error handler to the Result.
+func (r *Params4[A, B, C, D]) Err(handle ...HandlerFunc) (A, B, C, D) {
 	Check(r.err, handle...)
 	return r.paramA, r.paramB, r.paramC, r.paramD
 }
 
-func (r *Params4[A, B, C, D]) WithMessage(message string) (A, B, C, D) {
-	return r.With(messageHandler(message))
+func (r *Params4[A, B, C, D]) Ok(handle func(error) (A, B, C, D)) (A, B, C, D) {
+	return handle(r.err)
 }
-func (r *Params4[A, B, C, D]) WithWrap(message string) (A, B, C, D) {
-	return r.With(wrapHandler(message))
+
+func (r *Params4[A, B, C, D]) ErrMessage(message string) (A, B, C, D) {
+	return r.Err(messageHandler(message))
+}
+func (r *Params4[A, B, C, D]) ErrWrap(message string) (A, B, C, D) {
+	return r.Err(wrapHandler(message))
 }
 
 // five parameter functions
@@ -223,17 +241,20 @@ func Check5W[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) *Params5[A, 
 	return &Params5[A, B, C, D, E]{paramA: a, paramB: b, paramC: c, paramD: d, paramE: e, err: err}
 }
 
-// With applies an error handler to the Result.
-func (r *Params5[A, B, C, D, E]) With(handle ...HandlerFunc) (A, B, C, D, E) {
+// Err applies an error handler to the Result.
+func (r *Params5[A, B, C, D, E]) Err(handle ...HandlerFunc) (A, B, C, D, E) {
 	Check(r.err, handle...)
 	return r.paramA, r.paramB, r.paramC, r.paramD, r.paramE
 }
-
-func (r *Params5[A, B, C, D, E]) WithMessage(message string) (A, B, C, D, E) {
-	return r.With(messageHandler(message))
+func (r *Params5[A, B, C, D, E]) Ok(handle func(error) (A, B, C, D, E)) (A, B, C, D, E) {
+	return handle(r.err)
 }
-func (r *Params5[A, B, C, D, E]) WithWrap(message string) (A, B, C, D, E) {
-	return r.With(wrapHandler(message))
+
+func (r *Params5[A, B, C, D, E]) ErrMessage(message string) (A, B, C, D, E) {
+	return r.Err(messageHandler(message))
+}
+func (r *Params5[A, B, C, D, E]) ErrWrap(message string) (A, B, C, D, E) {
+	return r.Err(wrapHandler(message))
 }
 
 // ReturnErr is set caught error to passed named error

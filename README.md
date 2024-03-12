@@ -126,17 +126,17 @@ This allow us to reuse the error handler for multiple error checks.
 convertionError:= func (err error) error {
 return fmt.Errorf("failed to convert to int: %w", err)
 }
-x := errless.Check1W(strconv.Atoi(a)).With(convertionError)
-y := errless.Check1W(strconv.Atoi(a)).W(convertionError)
-z := errless.Check1W(strconv.Atoi(a)).W(convertionError)
+x := errless.Check1W(strconv.Atoi(a)).Err(convertionError)
+y := errless.Check1W(strconv.Atoi(a)).Err(convertionError)
+z := errless.Check1W(strconv.Atoi(a)).Err(convertionError)
 ```
 
 ### **Quickly Add Context to the Error**:
-You can add additional context to the error with **WithMessage** or **WithWrap**  method. This will add passed message to the error message.
+You can add additional context to the error with **ErrMessage** or **ErrWrap**  method. This will add passed message to the error message.
 
 ```go
 
-x := errless.Check1W(strconv.Atoi(a)).WithMessage("failed to convert to int")
+x := errless.Check1W(strconv.Atoi(a)).ErrMessage("failed to convert to int")
 
 ```
 You can even implement your own message addtion and use it with **With** method.
@@ -151,7 +151,7 @@ func message(message string,params...interfaces{}) HandlerFunc {
 ```
 Use the customised handler:
 ```go
-x := errless.Check1W(strconv.Atoi(a)).With(message("failed to convert to int"))
+x := errless.Check1W(strconv.Atoi(a)).Err(message("failed to convert to int"))
 
 ````
 
@@ -342,7 +342,7 @@ func process(user string, files chan string) (n int, err error) {
         handleB:= func (err error) { err = fmt.Errorf("attempt %d: %v", i, err) } // handler B
         handleC:=func (err error) { err = moreWrapping(err) }                    // handler C
         
-        e.Check1W(do(something())).With(handleC,handleB)  // check 1: handler chain C, B, A
+        e.Check1W(do(something())).Err(handleC,handleB)  // check 1: handler chain C, B, A
     }
     e.Check1(do(somethingElse()))  // check 2: handler chain A
 }
@@ -430,12 +430,12 @@ func SortContents(w io.Writer, files []string) (err error) {
 		handleB := func(err error) error {
 			return fmt.Errorf("read %s: %v ", file, err) // handler B
 		}
-		scan := bufio.NewScanner(e.Check1W(os.Open(file)).With(handleB)) // handler B
+		scan := bufio.NewScanner(e.Check1W(os.Open(file)).Err(handleB)) // handler B
 
 		for scan.Scan() {
 			lines = append(lines, scan.Text())
 		}
-		e.CheckW(scan.Err()).With(handleB) // handler B
+		e.CheckW(scan.Err()).Err(handleB) // handler B
 	}
 	sort.Strings(lines)
 	for _, line := range lines {
@@ -517,8 +517,8 @@ func CopyFile(src, dst string) error {
 		os.Remove(dst) // (only if a check fails)
 	}
 
-    e.Check1(io.Copy(w, r)).With(removeFile)
-    e.Check1(w.Close()).With(removeFile)
+    e.Check1(io.Copy(w, r)).Err(removeFile)
+    e.Check1(w.Close()).Err(removeFile)
 	return nil
 }
 ```

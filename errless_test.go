@@ -83,6 +83,7 @@ func TestCheckFunctions(t *testing.T) {
 		functionWithZeroReturn(t, tt)
 		functionWithOneReturn(t, tt)
 		functionWithTwoReturn(t, tt)
+		functionWithThreeReturn(t, tt)
 		functionWithFourReturn(t, tt)
 		functionWithFiveReturn(t, tt)
 
@@ -105,13 +106,23 @@ func functionWithZeroReturn(t *testing.T, tt TestCase) {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 			if tt.withCustomHandler != nil {
-				e.CheckW(zeroParameterFunc()).With(tt.withCustomHandler)
+				e.CheckW(zeroParameterFunc()).Err(tt.withCustomHandler)
 			} else if tt.withMessage != "" {
-				e.CheckW(zeroParameterFunc()).WithMessage(tt.withMessage)
+				e.CheckW(zeroParameterFunc()).ErrMessage(tt.withMessage)
 			} else {
 				e.Check(zeroParameterFunc())
 			}
 			return err
+		}
+
+		funcWithOk := func() (err error) {
+			defer e.Handle(&err, tt.errorHandle)
+			// if custom handler is not nil, use it
+			e.CheckW(zeroParameterFunc()).Ok(func(err error) {
+
+			})
+
+			return nil
 		}
 
 		// call function
@@ -121,6 +132,9 @@ func functionWithZeroReturn(t *testing.T, tt TestCase) {
 		} else {
 			assert.ErrorContains(t, err, tt.expectedErrorText)
 		}
+
+		err = funcWithOk()
+		assert.Nil(t, err)
 	})
 }
 
@@ -137,7 +151,7 @@ func functionWithOneReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				return e.Check1W(multiplyByTwo(a)).With(tt.withCustomHandler), nil
+				return e.Check1W(multiplyByTwo(a)).Err(tt.withCustomHandler), nil
 			} else {
 				return e.Check1(multiplyByTwo(a)), nil
 			}
@@ -152,6 +166,20 @@ func functionWithOneReturn(t *testing.T, tt TestCase) {
 			assert.ErrorContains(t, err, tt.expectedErrorText)
 			assert.Equal(t, 0, res)
 		}
+
+		// check ok case
+
+		funcWithOk := func(a int) (rez int, err error) {
+			defer e.Handle(&err, tt.errorHandle)
+			res := e.Check1W(multiplyByTwo(a)).Ok(func(err error) int {
+				return a * 2
+			})
+			return res, nil
+		}
+		res, err = funcWithOk(2)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, res)
+
 	})
 
 }
@@ -169,10 +197,10 @@ func functionWithTwoReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2 = e.Check2W(multiplyByTwo(a, b)).With(tt.withCustomHandler)
+				res1, res2 = e.Check2W(multiplyByTwo(a, b)).Err(tt.withCustomHandler)
 				return res1, res2, nil
 			} else if tt.withMessage != "" {
-				res1, res2 = e.Check2W(multiplyByTwo(a, b)).WithMessage(tt.withMessage)
+				res1, res2 = e.Check2W(multiplyByTwo(a, b)).ErrMessage(tt.withMessage)
 				return res1, res2, nil
 			} else {
 				res1, res2 = e.Check2(multiplyByTwo(a, b))
@@ -191,6 +219,18 @@ func functionWithTwoReturn(t *testing.T, tt TestCase) {
 			assert.Equal(t, 0, res1)
 			assert.Equal(t, 0, res2)
 		}
+
+		funcWithOk := func(a, b int) (res1, res2 int, err error) {
+			defer e.Handle(&err, tt.errorHandle)
+			res1, res2 = e.Check2W(multiplyByTwo(a, b)).Ok(func(err error) (int, int) {
+				return a * 2, b * 2
+			})
+			return res1, res2, nil
+		}
+		res1, res2, err = funcWithOk(2, 3)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, res1)
+		assert.Equal(t, 6, res2)
 	})
 
 }
@@ -208,10 +248,10 @@ func functionWithThreeReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).With(tt.withCustomHandler)
+				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).Err(tt.withCustomHandler)
 				return res1, res2, res3, nil
 			} else if tt.withMessage != "" {
-				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).WithMessage(tt.withMessage)
+				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).ErrMessage(tt.withMessage)
 				return res1, res2, res3, nil
 			} else {
 				res1, res2, res3 = e.Check3(multiplyByTwo(a, b, c))
@@ -232,6 +272,19 @@ func functionWithThreeReturn(t *testing.T, tt TestCase) {
 			assert.Equal(t, 0, res2)
 			assert.Equal(t, 0, res3)
 		}
+
+		funcWithOk := func(a, b, c int) (res1, res2, res3 int, err error) {
+			defer e.Handle(&err, tt.errorHandle)
+			res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).Ok(func(err error) (int, int, int) {
+				return a * 2, b * 2, c * 2
+			})
+			return res1, res2, res3, nil
+		}
+		res1, res2, res3, err = funcWithOk(2, 3, 4)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, res1)
+		assert.Equal(t, 6, res2)
+		assert.Equal(t, 8, res3)
 	})
 }
 func functionWithFourReturn(t *testing.T, tt TestCase) {
@@ -247,10 +300,10 @@ func functionWithFourReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).With(tt.withCustomHandler)
+				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).Err(tt.withCustomHandler)
 				return res1, res2, res3, res4, nil
 			} else if tt.withCustomHandler != nil {
-				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).WithMessage(tt.withMessage)
+				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).ErrMessage(tt.withMessage)
 				return res1, res2, res3, res4, nil
 			} else {
 				res1, res2, res3, res4 = e.Check4(multiplyByTwo(a, b, c, d))
@@ -273,6 +326,20 @@ func functionWithFourReturn(t *testing.T, tt TestCase) {
 			assert.Equal(t, 0, res3)
 			assert.Equal(t, 0, res4)
 		}
+
+		funcWithOk := func(a, b, c, d int) (res1, res2, res3, res4 int, err error) {
+			defer e.Handle(&err, tt.errorHandle)
+			res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).Ok(func(err error) (int, int, int, int) {
+				return a * 2, b * 2, c * 2, d * 2
+			})
+			return res1, res2, res3, res4, nil
+		}
+		res1, res2, res3, res4, err = funcWithOk(2, 3, 4, 5)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, res1)
+		assert.Equal(t, 6, res2)
+		assert.Equal(t, 8, res3)
+		assert.Equal(t, 10, res4)
 	})
 
 }
@@ -290,10 +357,10 @@ func functionWithFiveReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).With(tt.withCustomHandler)
+				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).Err(tt.withCustomHandler)
 				return res1, res2, res3, res4, res5, nil
 			} else if tt.withCustomHandler != nil {
-				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).WithMessage(tt.withMessage)
+				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).ErrMessage(tt.withMessage)
 				return res1, res2, res3, res4, res5, nil
 			} else {
 				res1, res2, res3, res4, res5 = e.Check5(multiplyByTwo(a, b, c, d, ee))
@@ -318,6 +385,21 @@ func functionWithFiveReturn(t *testing.T, tt TestCase) {
 			assert.Equal(t, 0, res4)
 			assert.Equal(t, 0, res5)
 		}
+
+		funcWithOk := func(a, b, c, d, ee int) (res1, res2, res3, res4, res5 int, err error) {
+			defer e.Handle(&err, tt.errorHandle)
+			res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).Ok(func(err error) (int, int, int, int, int) {
+				return a * 2, b * 2, c * 2, d * 2, ee * 2
+			})
+			return res1, res2, res3, res4, res5, nil
+		}
+		res1, res2, res3, res4, res5, err = funcWithOk(2, 3, 4, 5, 6)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, res1)
+		assert.Equal(t, 6, res2)
+		assert.Equal(t, 8, res3)
+		assert.Equal(t, 10, res4)
+		assert.Equal(t, 12, res5)
 	})
 
 }
