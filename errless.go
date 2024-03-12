@@ -52,8 +52,9 @@ func Check(err error, handles ...HandlerFunc) {
 	if err != nil {
 		for _, handle := range handles {
 			err = handle(err)
-			if err != nil {
-				err = handle(err)
+			if err == nil {
+				// get nil error no need to call the rest of the handler
+				break
 			}
 		}
 		if err != nil {
