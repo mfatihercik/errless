@@ -1,9 +1,36 @@
 package errless
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // HandlerFunc defines the signature for an error handler.
 type HandlerFunc func(error) error
+
+type IfFunc func(error) bool
+
+func Is(target error) IfFunc {
+	return func(err error) bool {
+		return errors.Is(err, target)
+	}
+
+}
+
+func IsNot(target error) IfFunc {
+	return func(err error) bool {
+		return !errors.Is(err, target)
+	}
+
+}
+
+func Contains(str string) IfFunc {
+	return func(err error) bool {
+		return strings.Contains(err.Error(), str)
+	}
+
+}
 
 func messageHandler(message string) HandlerFunc {
 	return func(err error) error {
@@ -37,7 +64,8 @@ func Check(err error, handles ...HandlerFunc) {
 
 // Params0 hold function parameters and error.
 type Params0 struct {
-	err error
+	err          error
+	skipNextStep bool
 }
 
 func CheckW(err error) *Params0 {
@@ -45,10 +73,16 @@ func CheckW(err error) *Params0 {
 }
 
 func (r *Params0) Err(handle ...HandlerFunc) {
-	Check(r.err, handle...)
+	if !r.skipNextStep {
+		Check(r.err, handle...)
+	}
 }
 func (r *Params0) Ok(handle func(error)) {
 	handle(r.err)
+}
+func (r *Params0) If(handle ...IfFunc) *Params0 {
+	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	return r
 }
 
 func (r *Params0) ErrMessage(message string) {
@@ -69,8 +103,9 @@ func Check1[A any](a A, err error) A {
 
 // Params1 hold function parameters and error.
 type Params1[A any] struct {
-	paramA A
-	err    error
+	paramA       A
+	err          error
+	skipNextStep bool
 }
 
 // Try1 is an alias for Check1W.
@@ -84,12 +119,18 @@ func Check1W[A any](a A, err error) *Params1[A] {
 
 // Err applies an error handler to the Result.
 func (r *Params1[A]) Err(handle ...HandlerFunc) A {
-	Check(r.err, handle...)
+	if !r.skipNextStep {
+		Check(r.err, handle...)
+	}
 	return r.paramA
 }
 
 func (r *Params1[A]) Ok(handle func(error) A) A {
 	return handle(r.err)
+}
+func (r *Params1[A]) If(handle ...IfFunc) *Params1[A] {
+	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	return r
 }
 
 // W is an alias for Err.
@@ -115,9 +156,10 @@ func Check2[A, B any](a A, b B, err error) (A, B) {
 
 // Params2 hold function parameters and error.
 type Params2[A, B any] struct {
-	paramA A
-	paramB B
-	err    error
+	paramA       A
+	paramB       B
+	err          error
+	skipNextStep bool
 }
 
 func Check2W[A, B any](a A, b B, err error) *Params2[A, B] {
@@ -126,12 +168,19 @@ func Check2W[A, B any](a A, b B, err error) *Params2[A, B] {
 
 // Err  applies an error handler to the Result.
 func (r *Params2[A, B]) Err(handle ...HandlerFunc) (A, B) {
-	Check(r.err, handle...)
+	if !r.skipNextStep {
+		Check(r.err, handle...)
+	}
 	return r.paramA, r.paramB
 }
 
 func (r *Params2[A, B]) Ok(handle func(error) (A, B)) (A, B) {
 	return handle(r.err)
+}
+
+func (r *Params2[A, B]) If(handle ...IfFunc) *Params2[A, B] {
+	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	return r
 }
 
 func (r *Params2[A, B]) ErrMessage(message string) (A, B) {
@@ -152,10 +201,11 @@ func Check3[A, B, C any](a A, b B, c C, err error) (A, B, C) {
 
 // Params3 hold function parameters and error.
 type Params3[A, B, C any] struct {
-	paramA A
-	paramB B
-	paramC C
-	err    error
+	paramA       A
+	paramB       B
+	paramC       C
+	err          error
+	skipNextStep bool
 }
 
 func Check3W[A, B, C any](a A, b B, c C, err error) *Params3[A, B, C] {
@@ -164,12 +214,19 @@ func Check3W[A, B, C any](a A, b B, c C, err error) *Params3[A, B, C] {
 
 // Err applies an error handler to the Result.
 func (r *Params3[A, B, C]) Err(handle ...HandlerFunc) (A, B, C) {
-	Check(r.err, handle...)
+	if !r.skipNextStep {
+		Check(r.err, handle...)
+	}
 	return r.paramA, r.paramB, r.paramC
 }
 
 func (r *Params3[A, B, C]) Ok(handle func(error) (A, B, C)) (A, B, C) {
 	return handle(r.err)
+}
+
+func (r *Params3[A, B, C]) If(handle ...IfFunc) *Params3[A, B, C] {
+	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	return r
 }
 
 func (r *Params3[A, B, C]) ErrMessage(message string) (A, B, C) {
@@ -190,11 +247,12 @@ func Check4[A, B, C, D any](a A, b B, c C, d D, err error) (A, B, C, D) {
 
 // Params4  hold function parameters and error.
 type Params4[A, B, C, D any] struct {
-	paramA A
-	paramB B
-	paramC C
-	paramD D
-	err    error
+	paramA       A
+	paramB       B
+	paramC       C
+	paramD       D
+	err          error
+	skipNextStep bool
 }
 
 func Check4W[A, B, C, D any](a A, b B, c C, d D, err error) *Params4[A, B, C, D] {
@@ -203,12 +261,19 @@ func Check4W[A, B, C, D any](a A, b B, c C, d D, err error) *Params4[A, B, C, D]
 
 // Err applies an error handler to the Result.
 func (r *Params4[A, B, C, D]) Err(handle ...HandlerFunc) (A, B, C, D) {
-	Check(r.err, handle...)
+	if !r.skipNextStep {
+		Check(r.err, handle...)
+	}
 	return r.paramA, r.paramB, r.paramC, r.paramD
 }
 
 func (r *Params4[A, B, C, D]) Ok(handle func(error) (A, B, C, D)) (A, B, C, D) {
 	return handle(r.err)
+}
+
+func (r *Params4[A, B, C, D]) If(handle ...IfFunc) *Params4[A, B, C, D] {
+	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	return r
 }
 
 func (r *Params4[A, B, C, D]) ErrMessage(message string) (A, B, C, D) {
@@ -229,12 +294,13 @@ func Check5[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) (A, B, C, D, 
 
 // Params5  hold function parameters and error.
 type Params5[A, B, C, D, E any] struct {
-	paramA A
-	paramB B
-	paramC C
-	paramD D
-	paramE E
-	err    error
+	paramA       A
+	paramB       B
+	paramC       C
+	paramD       D
+	paramE       E
+	err          error
+	skipNextStep bool
 }
 
 func Check5W[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) *Params5[A, B, C, D, E] {
@@ -243,11 +309,34 @@ func Check5W[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) *Params5[A, 
 
 // Err applies an error handler to the Result.
 func (r *Params5[A, B, C, D, E]) Err(handle ...HandlerFunc) (A, B, C, D, E) {
-	Check(r.err, handle...)
+	if !r.skipNextStep {
+		Check(r.err, handle...)
+	}
 	return r.paramA, r.paramB, r.paramC, r.paramD, r.paramE
 }
 func (r *Params5[A, B, C, D, E]) Ok(handle func(error) (A, B, C, D, E)) (A, B, C, D, E) {
 	return handle(r.err)
+}
+
+func (r *Params5[A, B, C, D, E]) If(handle ...IfFunc) *Params5[A, B, C, D, E] {
+	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	return r
+}
+
+func applyNextStep(handle []IfFunc, err error, skipNextStep bool) bool {
+
+	applyNext := !skipNextStep
+	if err == nil {
+		return applyNext
+	}
+	apply := false
+	for _, filter := range handle {
+		if filter(err) {
+			apply = true
+			break
+		}
+	}
+	return applyNext && apply
 }
 
 func (r *Params5[A, B, C, D, E]) ErrMessage(message string) (A, B, C, D, E) {

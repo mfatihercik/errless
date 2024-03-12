@@ -14,6 +14,7 @@ import (
 type TestCase struct {
 	name              string
 	expectedErrorText string
+	subErrorText      string
 	errorHandle       func(err error) error
 	withCustomHandler func(err error) error
 	withMessage       string
@@ -49,14 +50,26 @@ func TestCheckFunctions(t *testing.T) {
 				return fmt.Errorf("custom error :%w ", err)
 			},
 		},
-		{name: "custom handler: should return success",
-			expectedErrorText: "", // success case
+		{name: "Filter: should return customized error",
+			expectedErrorText: "custom error", // error in the custom handler
 			errorHandle: func(err error) error {
-				t.Fatal("shouldn't be called")
+				assert.ErrorContains(t, err, "custom error")
 				return err
 			},
 			withCustomHandler: func(err error) error {
-				t.Fatal("shouldn't be called")
+				return fmt.Errorf("custom error :%w ", err)
+			},
+			subErrorText: "custom",
+		},
+		{name: "custom handler: should return success",
+			expectedErrorText: "", // success case
+			errorHandle: func(err error) error {
+				t.Helper()
+				t.Fatal("shouldn't be called error handler")
+				return err
+			},
+			withCustomHandler: func(err error) error {
+				t.Fatal("shouldn't be called custom handler")
 				return err
 			},
 		},
@@ -106,7 +119,7 @@ func functionWithZeroReturn(t *testing.T, tt TestCase) {
 			defer e.Handle(&err, tt.errorHandle)
 			// if custom handler is not nil, use it
 			if tt.withCustomHandler != nil {
-				e.CheckW(zeroParameterFunc()).Err(tt.withCustomHandler)
+				e.CheckW(zeroParameterFunc()).If(e.Contains(tt.subErrorText)).Err(tt.withCustomHandler)
 			} else if tt.withMessage != "" {
 				e.CheckW(zeroParameterFunc()).ErrMessage(tt.withMessage)
 			} else {
@@ -151,7 +164,7 @@ func functionWithOneReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				return e.Check1W(multiplyByTwo(a)).Err(tt.withCustomHandler), nil
+				return e.Check1W(multiplyByTwo(a)).If(e.Contains(tt.subErrorText)).Err(tt.withCustomHandler), nil
 			} else {
 				return e.Check1(multiplyByTwo(a)), nil
 			}
@@ -197,7 +210,7 @@ func functionWithTwoReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2 = e.Check2W(multiplyByTwo(a, b)).Err(tt.withCustomHandler)
+				res1, res2 = e.Check2W(multiplyByTwo(a, b)).If(e.Contains(tt.subErrorText)).Err(tt.withCustomHandler)
 				return res1, res2, nil
 			} else if tt.withMessage != "" {
 				res1, res2 = e.Check2W(multiplyByTwo(a, b)).ErrMessage(tt.withMessage)
@@ -248,7 +261,7 @@ func functionWithThreeReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).Err(tt.withCustomHandler)
+				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).If(e.Contains(tt.subErrorText)).Err(tt.withCustomHandler)
 				return res1, res2, res3, nil
 			} else if tt.withMessage != "" {
 				res1, res2, res3 = e.Check3W(multiplyByTwo(a, b, c)).ErrMessage(tt.withMessage)
@@ -300,7 +313,7 @@ func functionWithFourReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).Err(tt.withCustomHandler)
+				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).If(e.Contains(tt.subErrorText)).Err(tt.withCustomHandler)
 				return res1, res2, res3, res4, nil
 			} else if tt.withCustomHandler != nil {
 				res1, res2, res3, res4 = e.Check4W(multiplyByTwo(a, b, c, d)).ErrMessage(tt.withMessage)
@@ -357,7 +370,7 @@ func functionWithFiveReturn(t *testing.T, tt TestCase) {
 			// if custom handler is not nil, use it
 
 			if tt.withCustomHandler != nil {
-				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).Err(tt.withCustomHandler)
+				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).If(e.Contains(tt.subErrorText)).Err(tt.withCustomHandler)
 				return res1, res2, res3, res4, res5, nil
 			} else if tt.withCustomHandler != nil {
 				res1, res2, res3, res4, res5 = e.Check5W(multiplyByTwo(a, b, c, d, ee)).ErrMessage(tt.withMessage)
