@@ -2,7 +2,7 @@
 
 ErrLess is a Go library that brings the simplicity and elegance of the proposed GoLang 2.0 error handling to Go
 developers **today**.
-Inspired by the draft design for error handling in Go 2.0
+Inspired by the draft design and ["try proposal"](https://github.com/golang/proposal/blob/master/design/32437-try-builtin.md) for error handling in Go 2.0 
 
 ## Error Handling — Problem Overview
 
@@ -60,7 +60,7 @@ func handleChain(err error) error {
 ## ErrLess: Bringing Go 2.0 Error Handling to Go Today
 
 Below code sniped is the same function(`printSum`) implemented with ErrLess.
-The implementation is almost the same with the GoLang 2.0 Error Handling Proposal.
+The implementation is almost the same with the GoLang 2.0 Error Handling Proposal. In here, we inspired from ["try proposal"](https://github.com/golang/proposal/blob/master/design/32437-try-builtin.md) for naming of the functions.
 
 ```go
 func printSum(a, b string) (err error) {
