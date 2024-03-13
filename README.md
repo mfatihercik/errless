@@ -67,8 +67,8 @@ func printSum(a, b string) (err error) {
     defer errless.Handle(&err, func (err error) error {
         return err
     })
-    x := errless.Check1(strconv.Atoi(a))
-    y := errless.Check1(strconv.Atoi(b))
+    x := errless.Try1(strconv.Atoi(a))
+    y := errless.Try1(strconv.Atoi(b))
     fmt.Println("result:", x + y)
     return nil
 }
@@ -76,15 +76,15 @@ func printSum(a, b string) (err error) {
 
 ```
 
-**Check1** is a generic function. It can be used with any function that returns a single value and error.
-The signature of **Check1** is:
+**Try1** is a generic function. It can be used with any function that returns a single value and error.
+The signature of **Try1** is:
 
 ```go
-func Check1[A any](a A, err error) A
+func Try1[A any](a A, err error) A
 ```
 
-`strconv.Atoi` is returning a value and an error that's why **Check1** is used here. If number of return value
-changes, you can use **Check2**, **Check3**, **Check4**, **Check5**.
+`strconv.Atoi` is returning a value and an error that's why **Try1** is used here. If number of return value
+changes, you can use **Try2**, **Try3**, **Try4**, **Try5**.
 
 
 Please closely look at the function's signature(`printSum(a, b string) (err error)`), where we use a named return value for the error(`err`).
@@ -98,7 +98,7 @@ can be found in at the **[end of the file](/README.md#errless-implementation-of-
 
 ### **Simplified Error Checking**:
 
-With functions like Check, **Check1**, **Check2**, **Check3**, **Check4**, and **Check5**,
+With functions like Try, **Try1**, **Try2**, **Try3**, **Try4**, and **Try5**,
 ErrLess allows developers to handle errors without cluttering their code with repetitive error checks.
 
 **Before:**
@@ -113,12 +113,12 @@ x, err := strconv.Atoi(a)
 After:
 
 ```go
-x := errless.Check1(strconv.Atoi(a))
+x := errless.Try1(strconv.Atoi(a))
 ```
 
 ### **Scoped Error Handler**: 
 If you want to add context to the error for specific error check,
-you can implement custom error handler. In this case, we need to use **Check1W**, **Check2W**, **Check3W**, **Check4W**,
+you can implement custom error handler. In this case, we need to use **Try1**, **Check2W**, **Check3W**, **Check4W**,
 **Check5W** functions.
 This allow us to reuse the error handler for multiple error checks.  
 
@@ -126,9 +126,9 @@ This allow us to reuse the error handler for multiple error checks.
 convertionError:= func (err error) error {
 return fmt.Errorf("failed to convert to int: %w", err)
 }
-x := errless.Check1W(strconv.Atoi(a)).Err(convertionError)
-y := errless.Check1W(strconv.Atoi(a)).Err(convertionError)
-z := errless.Check1W(strconv.Atoi(a)).Err(convertionError)
+x := errless.Try1(strconv.Atoi(a)).Err(convertionError)
+y := errless.Try1(strconv.Atoi(a)).Err(convertionError)
+z := errless.Try1(strconv.Atoi(a)).Err(convertionError)
 ```
 
 ### **Quickly Add Context to the Error**:
@@ -136,7 +136,7 @@ You can add additional context to the error with **ErrMessage** or **ErrWrap**  
 
 ```go
 
-x := errless.Check1W(strconv.Atoi(a)).ErrMessage("failed to convert to int")
+x := errless.Try1(strconv.Atoi(a)).ErrMessage("failed to convert to int")
 
 ```
 You can even implement your own message addtion and use it with **With** method.
@@ -151,29 +151,57 @@ func message(message string,params...interfaces{}) HandlerFunc {
 ```
 Use the customised handler:
 ```go
-x := errless.Check1W(strconv.Atoi(a)).Err(message("failed to convert to int"))
+x := errless.Try1(strconv.Atoi(a)).Err(message("failed to convert to int"))
 
 ````
 
 
 
-###  **Function Scoped Error Handler**: 
-If you want to add context to the error for **any** errors can happen in a function call,you can use **Handle** or **HandleReturn** method.
+###  **Scoped Error Handling in Functions**: 
+If you want to add context to the error for **any** errors can happen in a function call,you can use **Handle** or **Catch** method.
 
 Imagine you want to add "sum of values failed" to the returning error of the function. You can use below code.
 
 ```go
 func sum(a, b string) (res int, err error) {
-    defer errless.HandleReturn(func (e error) {
+    defer errless.Catch(func (e error) {
 		// assign to named error return value
         err= fmt.Errorf("sum of values failed: %w", e)
     })
-    x := errless.Check1(strconv.Atoi(a))
-    y := errless.Check1(strconv.Atoi(b))
+    x := errless.Try1(strconv.Atoi(a))
+    y := errless.Try1(strconv.Atoi(b))
     return x + y, nil
 }
 ```
 it will add "sum of values failed" to the returning error of the function not mather error is coming from `strconv.Atoi(a)` or `strconv.Atoi(b)`.
+
+###  **Filter Error With `If` Function**:
+You can filter the error before it is handled with **If** method. This will allow you to handle only specific errors.
+You can use one of pre build filter functions or you can implement your own filter function.
+Availabe prebuild functions are **Is**, **IsNot**, **Contains**, **NotContains**
+
+```go
+func getFromDB(id string) (res string, err error) {
+    defer errless.HandleErr(&err)
+    res = e.Try1(getFromDB(id)).If(e.IsNot(sql.ErrNoRows)).ErrMessage("no record found for id: "+id))
+    return res, nil
+}
+```
+
+### **Error Fallback with the `Fallback` Function**:
+You can use **Fallback** method to provide a fallback value for executed function. 
+Assume you calling a database  to get a record and 
+you want to provide a default value if record is not found. You can use `Or` function
+
+```go
+func getFromDB(id string) (res string, err error) {
+    defer errless.HandleErr(&err)
+    res = e.Try1(getFromDB(id)).If(e.Is(sql.ErrNoRows).Fallback(func(err error) string {
+            return e.Throw1(CreateNewRecord(id))
+    }))
+    return res, nil
+}
+```
 
 
 ### **Static Type Check**: 
@@ -186,7 +214,7 @@ multiple values along with an error. Thanks to generics, **all type checking is 
 
 Using it is quite straightforward.
 
-Just `defer errless.Handle` method beginning of the function and wrap any error returning function with `Check` ,`Check1`, `Check2`, `Check3`, `Check4`, `Check5` and remove the error checking code.
+Just `defer errless.Handle` method beginning of the function and wrap any error returning function with `Try` ,`Try1`, `Check2`, `Check3`, `Try4`, `Try5` and remove the error checking code.
 
 ```go
 
@@ -200,8 +228,8 @@ import (
 
 func sum(a, b string) (res int, err error) {
     defer errless.Handle(&err, errless.EmptyHandler)
-    x := errless.Check1(strconv.Atoi(a))
-    y := errless.Check1(strconv.Atoi(b))
+    x := errless.Try1(strconv.Atoi(a))
+    y := errless.Try1(strconv.Atoi(b))
     return x + y, nil
 }
 
@@ -239,7 +267,7 @@ MIT License
 ## ErrLess implementation of Examples in GoLang 2.0 Error Handling Proposal
 
 You can find the implementation of the examples in the [GoLang 2.0 Error Handling Proposal](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling.md) below.
-You can see that only changes are the usage of `errless.Check1` and `errless.Handle` methods instead of the `check` and `handle` keywords.
+You can see that only changes are the usage of `errless.Try1` and `errless.Handle` methods instead of the `check` and `handle` keywords.
 
 **Real Code Conversion** examples are in [here](https://gist.github.com/mfatihercik/5cf423bb720d7f7313d976b06360fdbb)
 
@@ -269,8 +297,8 @@ func printSum(a, b string) (err error) {
     defer e.HandleReturn(func (e error){
         err = e
     }
-    x := e.Check1(strconv.Atoi(a))
-    y := e.Check1(strconv.Atoi(a))
+    x := e.Try1(strconv.Atoi(a))
+    y := e.Try1(strconv.Atoi(a))
     fmt.Println("result:", x + y)
     return nil
 }
@@ -302,7 +330,7 @@ func printSum(a, b string) (err error) {
     defer e.HandleReturn(func (e error){
         err = e
     }
-    fmt.Println("result:", e.Check1(strconv.Atoi(a)) + e.Check1(strconv.Atoi(b)))
+    fmt.Println("result:", e.Try1(strconv.Atoi(a)) + e.Try1(strconv.Atoi(b)))
     return nil
 }
 ```
@@ -342,9 +370,9 @@ func process(user string, files chan string) (n int, err error) {
         handleB:= func (err error) { err = fmt.Errorf("attempt %d: %v", i, err) } // handler B
         handleC:=func (err error) { err = moreWrapping(err) }                    // handler C
         
-        e.Check1W(do(something())).Err(handleC,handleB)  // check 1: handler chain C, B, A
+        e.Try1(do(something())).Err(handleC,handleB)  // check 1: handler chain C, B, A
     }
-    e.Check1(do(somethingElse()))  // check 2: handler chain A
+    e.Try1(do(somethingElse()))  // check 2: handler chain A
 }
 
 ```
@@ -378,8 +406,8 @@ func TestFoo(t *testing.T) {
         t.Fatal(e)
    })
 	for _, tc := range testCases {
-		x := e.Check1(Foo(tc.a))
-		y := e.Check1(Foo(tc.b))
+		x := e.Try1(Foo(tc.a))
+		y := e.Try1(Foo(tc.b))
 		if x != y {
 			t.Errorf("Foo(%v) != Foo(%v)", tc.a, tc.b)
 		}
@@ -430,16 +458,16 @@ func SortContents(w io.Writer, files []string) (err error) {
 		handleB := func(err error) error {
 			return fmt.Errorf("read %s: %v ", file, err) // handler B
 		}
-		scan := bufio.NewScanner(e.Check1W(os.Open(file)).Err(handleB)) // handler B
+		scan := bufio.NewScanner(e.Try1(os.Open(file)).Err(handleB)) // handler B
 
 		for scan.Scan() {
 			lines = append(lines, scan.Text())
 		}
-		e.CheckW(scan.Err()).Err(handleB) // handler B
+		e.Try(scan.Err()).Err(handleB) // handler B
 	}
 	sort.Strings(lines)
 	for _, line := range lines {
-		e.Check1(io.WriteString(w, line)) // check runs A on error
+		e.Try1(io.WriteString(w, line)) // check runs A on error
 	}
 	return nil
 }
@@ -507,18 +535,18 @@ func CopyFile(src, dst string) error {
         err = fmt.Errorf("copy %s %s: %v", src, dst, e)
     })
 	
-	r := e.Check1(os.Open(src))
+	r := e.Try1(os.Open(src))
 	defer r.Close()
 
-	w := e.Check1(os.Create(dst))
+	w := e.Try1(os.Create(dst))
 	
 	removeFile:= (err error) {
 		w.Close()
 		os.Remove(dst) // (only if a check fails)
 	}
 
-    e.Check1(io.Copy(w, r)).Err(removeFile)
-    e.Check1(w.Close()).Err(removeFile)
+    e.Try1(io.Copy(w, r)).Err(removeFile)
+    e.Try1(w.Close()).Err(removeFile)
 	return nil
 }
 ```

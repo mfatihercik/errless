@@ -26,7 +26,7 @@ func callRiskyOperation() (res Result, err error) {
 	customHandler := func(err error) error {
 		return fmt.Errorf("Custom Handler :%w ", err)
 	}
-	result := errless.Check1W(riskyOperation()).Err(customHandler)
+	result := errless.Try1(riskyOperation()).Err(customHandler)
 	return result, nil
 }
 

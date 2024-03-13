@@ -32,13 +32,13 @@ func Contains(str string) IfFunc {
 
 }
 
-func messageHandler(message string) HandlerFunc {
+func Message(message string) HandlerFunc {
 	return func(err error) error {
 		return fmt.Errorf(message+" - error: %s", err)
 	}
 }
 
-func wrapHandler(message string) HandlerFunc {
+func Wrap(message string) HandlerFunc {
 	return func(err error) error {
 		return fmt.Errorf(message+" - error: %s", err)
 	}
@@ -47,8 +47,8 @@ func wrapHandler(message string) HandlerFunc {
 // zero parameter functions
 // --------------------------
 
-// Check checks the error with default error handler.
-func Check(err error, handles ...HandlerFunc) {
+// Throw checks the error with default error handler.
+func Throw(err error, handles ...HandlerFunc) {
 	if err != nil {
 		for _, handle := range handles {
 			err = handle(err)
@@ -69,16 +69,16 @@ type Params0 struct {
 	skipNextStep bool
 }
 
-func CheckW(err error) *Params0 {
+func Try(err error) *Params0 {
 	return &Params0{err: err}
 }
 
 func (r *Params0) Err(handle ...HandlerFunc) {
 	if !r.skipNextStep {
-		Check(r.err, handle...)
+		Throw(r.err, handle...)
 	}
 }
-func (r *Params0) Ok(handle func(error)) {
+func (r *Params0) Or(handle func(error)) {
 	handle(r.err)
 }
 func (r *Params0) If(handle ...IfFunc) *Params0 {
@@ -87,71 +87,76 @@ func (r *Params0) If(handle ...IfFunc) *Params0 {
 }
 
 func (r *Params0) ErrMessage(message string) {
-	r.Err(messageHandler(message))
+	r.Err(Message(message))
 }
 func (r *Params0) ErrWrap(message string) {
-	r.Err(wrapHandler(message))
+	r.Err(Wrap(message))
 }
 
 // one parameter functions
 // --------------------------
 
-// Check1 checks the error with default error handler.
-func Check1[A any](a A, err error) A {
-	Check(err)
+// Throw1 checks the error with default error handler.
+func Throw1[A any](a A, err error) A {
+	Throw(err)
 	return a
 }
 
 // Params1 hold function parameters and error.
 type Params1[A any] struct {
-	paramA       A
-	err          error
-	skipNextStep bool
+	paramA         A
+	err            error
+	skipNextHandle bool
 }
 
-// Try1 is an alias for Check1W.
 func Try1[A any](a A, err error) *Params1[A] {
-	return Check1W(a, err)
-}
-
-func Check1W[A any](a A, err error) *Params1[A] {
 	return &Params1[A]{paramA: a, err: err}
 }
 
 // Err applies an error handler to the Result.
 func (r *Params1[A]) Err(handle ...HandlerFunc) A {
-	if !r.skipNextStep {
-		Check(r.err, handle...)
+	if !r.skipNextHandle {
+		Throw(r.err, handle...)
 	}
 	return r.paramA
 }
 
-func (r *Params1[A]) Ok(handle func(error) A) A {
+func (r *Params1[A]) Fallback(handle func(error) A) A {
+	if r.skipNextHandle {
+		Throw(r.err)
+	}
 	return handle(r.err)
 }
 func (r *Params1[A]) If(handle ...IfFunc) *Params1[A] {
-	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
+	r.skipNextHandle = !applyNextStep(handle, r.err, r.skipNextHandle)
 	return r
 }
 
-// W is an alias for Err.
-func (r *Params1[A]) W(handle ...HandlerFunc) A {
+func (r *Params1[A]) IfIs(err error) *Params1[A] {
+	return r.If(Is(err))
+}
+func (r *Params1[A]) IfNot(err error) *Params1[A] {
+	return r.If(IsNot(err))
+}
+
+// E is an alias for Err.
+func (r *Params1[A]) E(handle ...HandlerFunc) A {
 	return r.Err(handle...)
 }
 
 func (r *Params1[A]) ErrMessage(message string) A {
-	return r.Err(messageHandler(message))
+	return r.Err(Message(message))
 }
 func (r *Params1[A]) ErrWrap(message string) A {
-	return r.Err(wrapHandler(message))
+	return r.Err(Wrap(message))
 }
 
 // 2 parameter functions
 // --------------------------
 
-// Check2 checks the error with default error handler.
-func Check2[A, B any](a A, b B, err error) (A, B) {
-	Check(err)
+// Throw2 checks the error with default error handler.
+func Throw2[A, B any](a A, b B, err error) (A, B) {
+	Throw(err)
 	return a, b
 }
 
@@ -163,19 +168,22 @@ type Params2[A, B any] struct {
 	skipNextStep bool
 }
 
-func Check2W[A, B any](a A, b B, err error) *Params2[A, B] {
+func Try2[A, B any](a A, b B, err error) *Params2[A, B] {
 	return &Params2[A, B]{paramA: a, paramB: b, err: err}
 }
 
 // Err  applies an error handler to the Result.
 func (r *Params2[A, B]) Err(handle ...HandlerFunc) (A, B) {
 	if !r.skipNextStep {
-		Check(r.err, handle...)
+		Throw(r.err, handle...)
 	}
 	return r.paramA, r.paramB
 }
 
-func (r *Params2[A, B]) Ok(handle func(error) (A, B)) (A, B) {
+func (r *Params2[A, B]) Fallback(handle func(error) (A, B)) (A, B) {
+	if r.skipNextStep {
+		Throw(r.err)
+	}
 	return handle(r.err)
 }
 
@@ -184,19 +192,26 @@ func (r *Params2[A, B]) If(handle ...IfFunc) *Params2[A, B] {
 	return r
 }
 
+func (r *Params2[A, B]) IfIs(err error) *Params2[A, B] {
+	return r.If(Is(err))
+}
+func (r *Params2[A, B]) IfNot(err error) *Params2[A, B] {
+	return r.If(IsNot(err))
+}
+
 func (r *Params2[A, B]) ErrMessage(message string) (A, B) {
-	return r.Err(messageHandler(message))
+	return r.Err(Message(message))
 }
 func (r *Params2[A, B]) ErrWrap(message string) (A, B) {
-	return r.Err(wrapHandler(message))
+	return r.Err(Wrap(message))
 }
 
 // three parameter functions
 // --------------------------
 
-// Check3 checks the error with default error handler.
-func Check3[A, B, C any](a A, b B, c C, err error) (A, B, C) {
-	Check(err)
+// Throw3 checks the error with default error handler.
+func Throw3[A, B, C any](a A, b B, c C, err error) (A, B, C) {
+	Throw(err)
 	return a, b, c
 }
 
@@ -209,19 +224,22 @@ type Params3[A, B, C any] struct {
 	skipNextStep bool
 }
 
-func Check3W[A, B, C any](a A, b B, c C, err error) *Params3[A, B, C] {
+func Try3[A, B, C any](a A, b B, c C, err error) *Params3[A, B, C] {
 	return &Params3[A, B, C]{paramA: a, paramB: b, paramC: c, err: err}
 }
 
 // Err applies an error handler to the Result.
 func (r *Params3[A, B, C]) Err(handle ...HandlerFunc) (A, B, C) {
 	if !r.skipNextStep {
-		Check(r.err, handle...)
+		Throw(r.err, handle...)
 	}
 	return r.paramA, r.paramB, r.paramC
 }
 
-func (r *Params3[A, B, C]) Ok(handle func(error) (A, B, C)) (A, B, C) {
+func (r *Params3[A, B, C]) Fallback(handle func(error) (A, B, C)) (A, B, C) {
+	if r.skipNextStep {
+		Throw(r.err)
+	}
 	return handle(r.err)
 }
 
@@ -230,19 +248,26 @@ func (r *Params3[A, B, C]) If(handle ...IfFunc) *Params3[A, B, C] {
 	return r
 }
 
+func (r *Params3[A, B, C]) IfIs(err error) *Params3[A, B, C] {
+	return r.If(Is(err))
+}
+func (r *Params3[A, B, C]) IfNot(err error) *Params3[A, B, C] {
+	return r.If(IsNot(err))
+}
+
 func (r *Params3[A, B, C]) ErrMessage(message string) (A, B, C) {
-	return r.Err(messageHandler(message))
+	return r.Err(Message(message))
 }
 func (r *Params3[A, B, C]) ErrWrap(message string) (A, B, C) {
-	return r.Err(wrapHandler(message))
+	return r.Err(Wrap(message))
 }
 
 // four parameter functions
 // --------------------------
 
-// Check4 checks the error with default error handler.
-func Check4[A, B, C, D any](a A, b B, c C, d D, err error) (A, B, C, D) {
-	Check(err)
+// Throw4 checks the error with default error handler.
+func Throw4[A, B, C, D any](a A, b B, c C, d D, err error) (A, B, C, D) {
+	Throw(err)
 	return a, b, c, d
 }
 
@@ -256,19 +281,22 @@ type Params4[A, B, C, D any] struct {
 	skipNextStep bool
 }
 
-func Check4W[A, B, C, D any](a A, b B, c C, d D, err error) *Params4[A, B, C, D] {
+func Try4[A, B, C, D any](a A, b B, c C, d D, err error) *Params4[A, B, C, D] {
 	return &Params4[A, B, C, D]{paramA: a, paramB: b, paramC: c, paramD: d, err: err}
 }
 
 // Err applies an error handler to the Result.
 func (r *Params4[A, B, C, D]) Err(handle ...HandlerFunc) (A, B, C, D) {
 	if !r.skipNextStep {
-		Check(r.err, handle...)
+		Throw(r.err, handle...)
 	}
 	return r.paramA, r.paramB, r.paramC, r.paramD
 }
 
-func (r *Params4[A, B, C, D]) Ok(handle func(error) (A, B, C, D)) (A, B, C, D) {
+func (r *Params4[A, B, C, D]) Fallback(handle func(error) (A, B, C, D)) (A, B, C, D) {
+	if r.skipNextStep {
+		Throw(r.err)
+	}
 	return handle(r.err)
 }
 
@@ -277,19 +305,26 @@ func (r *Params4[A, B, C, D]) If(handle ...IfFunc) *Params4[A, B, C, D] {
 	return r
 }
 
+func (r *Params4[A, B, C, D]) IfIs(err error) *Params4[A, B, C, D] {
+	return r.If(Is(err))
+}
+func (r *Params4[A, B, C, D]) IfNot(err error) *Params4[A, B, C, D] {
+	return r.If(IsNot(err))
+}
+
 func (r *Params4[A, B, C, D]) ErrMessage(message string) (A, B, C, D) {
-	return r.Err(messageHandler(message))
+	return r.Err(Message(message))
 }
 func (r *Params4[A, B, C, D]) ErrWrap(message string) (A, B, C, D) {
-	return r.Err(wrapHandler(message))
+	return r.Err(Wrap(message))
 }
 
 // five parameter functions
 // --------------------------
 
-// Check5 checks the error with default error handler.
-func Check5[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) (A, B, C, D, E) {
-	Check(err)
+// Throw5 checks the error with default error handler.
+func Throw5[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) (A, B, C, D, E) {
+	Throw(err)
 	return a, b, c, d, e
 }
 
@@ -304,24 +339,37 @@ type Params5[A, B, C, D, E any] struct {
 	skipNextStep bool
 }
 
-func Check5W[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) *Params5[A, B, C, D, E] {
+func Try5[A, B, C, D, E any](a A, b B, c C, d D, e E, err error) *Params5[A, B, C, D, E] {
 	return &Params5[A, B, C, D, E]{paramA: a, paramB: b, paramC: c, paramD: d, paramE: e, err: err}
 }
 
 // Err applies an error handler to the Result.
 func (r *Params5[A, B, C, D, E]) Err(handle ...HandlerFunc) (A, B, C, D, E) {
 	if !r.skipNextStep {
-		Check(r.err, handle...)
+		Throw(r.err, handle...)
 	}
 	return r.paramA, r.paramB, r.paramC, r.paramD, r.paramE
 }
-func (r *Params5[A, B, C, D, E]) Ok(handle func(error) (A, B, C, D, E)) (A, B, C, D, E) {
+func (r *Params5[A, B, C, D, E]) Fallback(handle func(error) (A, B, C, D, E)) (A, B, C, D, E) {
+	if r.skipNextStep {
+		Throw(r.err)
+	}
+	if r.skipNextStep {
+		Throw(r.err)
+	}
 	return handle(r.err)
 }
 
 func (r *Params5[A, B, C, D, E]) If(handle ...IfFunc) *Params5[A, B, C, D, E] {
 	r.skipNextStep = !applyNextStep(handle, r.err, r.skipNextStep)
 	return r
+}
+
+func (r *Params5[A, B, C, D, E]) IfIs(err error) *Params5[A, B, C, D, E] {
+	return r.If(Is(err))
+}
+func (r *Params5[A, B, C, D, E]) IfNot(err error) *Params5[A, B, C, D, E] {
+	return r.If(IsNot(err))
 }
 
 func applyNextStep(handle []IfFunc, err error, skipNextStep bool) bool {
@@ -341,14 +389,14 @@ func applyNextStep(handle []IfFunc, err error, skipNextStep bool) bool {
 }
 
 func (r *Params5[A, B, C, D, E]) ErrMessage(message string) (A, B, C, D, E) {
-	return r.Err(messageHandler(message))
+	return r.Err(Message(message))
 }
 func (r *Params5[A, B, C, D, E]) ErrWrap(message string) (A, B, C, D, E) {
-	return r.Err(wrapHandler(message))
+	return r.Err(Wrap(message))
 }
 
-// ReturnErr is set caught error to passed named error
-func ReturnErr(namedErr *error) {
+// HandleErr is set caught error to passed named error
+func HandleErr(namedErr *error) {
 	Handle(namedErr, EmptyHandler)
 }
 
@@ -367,7 +415,7 @@ func Handle(namedErr *error, onError func(error) error) {
 	}
 }
 
-func HandleReturn(onError func(e error)) {
+func Catch(onError func(e error)) {
 	if r := recover(); r != nil {
 		if err, ok := r.(error); ok {
 			onError(err)

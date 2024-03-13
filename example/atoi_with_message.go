@@ -12,8 +12,8 @@ import (
 
 func sumWithMessage(a, b string) (res int, err error) {
 	defer errless.Handle(&err, errless.EmptyHandler)
-	x := errless.Check1W(strconv.Atoi(a)).ErrMessage("cannot convert to int")
-	y := errless.Check1W(strconv.Atoi(b)).ErrMessage("cannot convert to int")
+	x := errless.Try1(strconv.Atoi(a)).ErrMessage("cannot convert to int")
+	y := errless.Try1(strconv.Atoi(b)).ErrMessage("cannot convert to int")
 	return x + y, nil
 }
 
