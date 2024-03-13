@@ -118,8 +118,8 @@ x := errless.Try1(strconv.Atoi(a))
 
 ### **Scoped Error Handler**: 
 If you want to add context to the error for specific error check,
-you can implement custom error handler. In this case, we need to use **Try1**, **Check2W**, **Check3W**, **Check4W**,
-**Check5W** functions.
+you can implement custom error handler. In this case, we need to use **Try1**, **Try2**, **Try3**, **Try4**,
+**Try5** functions.
 This allow us to reuse the error handler for multiple error checks.  
 
 ```go
