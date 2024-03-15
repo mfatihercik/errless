@@ -69,7 +69,11 @@ func recoverException(r any) *exception {
 
 // HandleErr is set caught error to passed named error
 func HandleErr(namedErr *error) {
-	Handle(namedErr, EmptyHandler)
+	exp := recoverException(recover())
+	if exp != nil && namedErr != nil {
+		*namedErr = exp.error
+
+	}
 }
 
 // Handle is used to handle to catch panics and handle errors with a custom error handling function.
