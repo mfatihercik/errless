@@ -432,7 +432,7 @@ func TestHandleFunctions(t *testing.T) {
 		errlessException := func() {
 			defer e.HandleErr(nil)
 
-			e.Throw(errors.New("non exception panic"))
+			e.Throw(errors.New("errless exception"))
 		}
 		errlessException()
 	})
