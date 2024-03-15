@@ -1,7 +1,7 @@
 # Makefile for the Go project
 
 # Go parameters
-GOCMD=$(GOROOT)/bin/go
+GOCMD=go
 GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
 GOCLEAN=$(GOCMD) clean
