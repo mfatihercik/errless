@@ -428,7 +428,7 @@ func TestHandleFunctions(t *testing.T) {
 		assert.PanicsWithError(t, "non exception panic", nonExceptionPanic)
 	})
 
-	t.Run("shouldn't recover  exception panics", func(t *testing.T) {
+	t.Run("should recover  exception panics", func(t *testing.T) {
 		errlessException := func() {
 			defer e.HandleErr(nil)
 
