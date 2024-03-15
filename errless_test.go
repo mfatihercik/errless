@@ -428,9 +428,20 @@ func TestHandleFunctions(t *testing.T) {
 		assert.PanicsWithError(t, "non exception panic", nonExceptionPanic)
 	})
 
-	t.Run("should recover  exception panics", func(t *testing.T) {
+	t.Run("HandleErr:should recover  exception panics", func(t *testing.T) {
 		errlessException := func() {
-			defer e.Handle(nil, e.EmptyHandler)
+			defer e.HandleErr(nil)
+
+			e.Throw(errors.New("errless exception"))
+		}
+		assert.NotPanics(t, errlessException)
+	})
+
+	t.Run("Catch: should recover  exception", func(t *testing.T) {
+		errlessException := func() {
+			defer e.Catch(func(e error) {
+				assert.ErrorContains(t, e, "errless exception")
+			})
 
 			e.Throw(errors.New("errless exception"))
 		}
