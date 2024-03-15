@@ -416,3 +416,25 @@ func functionWithFiveReturn(t *testing.T, tt TestCase) {
 	})
 
 }
+
+func TestHandleFunctions(t *testing.T) {
+
+	t.Run("shouldn't recover non exception panics", func(t *testing.T) {
+		nonExceptionPanic := func() {
+			defer e.HandleErr(nil)
+
+			panic(errors.New("non exception panic"))
+		}
+		assert.PanicsWithError(t, "non exception panic", nonExceptionPanic)
+	})
+
+	t.Run("shouldn't recover  exception panics", func(t *testing.T) {
+		errlessException := func() {
+			defer e.HandleErr(nil)
+
+			e.Throw(errors.New("non exception panic"))
+		}
+		errlessException()
+	})
+
+}

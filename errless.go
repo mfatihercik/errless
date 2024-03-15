@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+type exception struct {
+	error error
+}
+
 // HandlerFunc defines the signature for an error handler.
 type HandlerFunc func(error) error
 
@@ -44,6 +48,48 @@ func Wrap(message string) HandlerFunc {
 	}
 }
 
+func EmptyHandler(err error) error {
+	return err
+}
+
+// Error handler functions
+// --------------------------
+
+func recoverException(r any) *exception {
+	if r != nil {
+		if e, ok := r.(exception); ok {
+			return &e
+		} else {
+			// This was not an error panic; re-panic with the original value.
+			panic(r)
+		}
+	}
+	return nil
+}
+
+// HandleErr is set caught error to passed named error
+func HandleErr(namedErr *error) {
+	Handle(namedErr, EmptyHandler)
+}
+
+// Handle is used to handle to catch panics and handle errors with a custom error handling function.
+func Handle(namedErr *error, onError func(error) error) {
+	exp := recoverException(recover())
+	if exp != nil {
+		e := onError(exp.error) // Use the provided custom error handling logic.
+		if namedErr != nil {
+			*namedErr = e
+		}
+	}
+}
+
+func Catch(onError func(e error)) {
+	exp := recoverException(recover())
+	if exp != nil {
+		onError(exp.error)
+	}
+}
+
 // zero parameter functions
 // --------------------------
 
@@ -58,7 +104,7 @@ func Throw(err error, handles ...HandlerFunc) {
 			}
 		}
 		if err != nil {
-			panic(err)
+			panic(exception{error: err})
 		}
 	}
 }
@@ -393,39 +439,4 @@ func (r *Params5[A, B, C, D, E]) ErrMessage(message string) (A, B, C, D, E) {
 }
 func (r *Params5[A, B, C, D, E]) ErrWrap(message string) (A, B, C, D, E) {
 	return r.Err(Wrap(message))
-}
-
-// HandleErr is set caught error to passed named error
-func HandleErr(namedErr *error) {
-	Handle(namedErr, EmptyHandler)
-}
-
-// Handle is used to handle to catch panics and handle errors with a custom error handling function.
-func Handle(namedErr *error, onError func(error) error) {
-	if r := recover(); r != nil {
-		if err, ok := r.(error); ok {
-			e := onError(err) // Use the provided custom error handling logic.
-			if namedErr != nil {
-				*namedErr = e
-			}
-		} else {
-			// This was not an error panic; re-panic with the original value.
-			panic(r)
-		}
-	}
-}
-
-func Catch(onError func(e error)) {
-	if r := recover(); r != nil {
-		if err, ok := r.(error); ok {
-			onError(err)
-		} else {
-			// This was not an error panic; re-panic with the original value.
-			panic(r)
-		}
-	}
-}
-
-func EmptyHandler(err error) error {
-	return err
 }
