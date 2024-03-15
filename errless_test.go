@@ -434,7 +434,7 @@ func TestHandleFunctions(t *testing.T) {
 
 			e.Throw(errors.New("errless exception"))
 		}
-		errlessException()
+		assert.NotPanics(t, errlessException)
 	})
 
 }
